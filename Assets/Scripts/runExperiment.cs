@@ -54,14 +54,14 @@ public class runExperiment : MonoBehaviour
     public bool currentIsCongruent;
     [HideInInspector]
     public string currentTrialCategory;
+    private bool updateNextNavon;
     
 
     [HideInInspector]
     public string[] responseforPresentAbsent; // grabbed by showText.
     
-    private bool updateNextNavon;
     bool SetUpSession;
-    private bool hasShownCalibrationComplete = false;
+
     //todo
     //public bool forceheightCalibration;
     //public bool forceEyecalibration;
@@ -120,7 +120,7 @@ public class runExperiment : MonoBehaviour
         
         hasResponded = false;
         
-        updateNextNavon = false;
+        updateNextNavon=false;
         
         SetUpSession = true;
 
@@ -134,15 +134,12 @@ public class runExperiment : MonoBehaviour
             if (skipWalkCalibration)
             {
                 // show welcome 
-                ShowText.UpdateText(ShowText.TextType.CalibrationComplete);
-                
-                
+                ShowText.UpdateText(ShowText.TextType.CalibrationComplete);                
             }
             else
             {
                 // show welcome 
                 ShowText.UpdateText(ShowText.TextType.Welcome);
-
             }
             SetUpSession = false;
         }
@@ -247,15 +244,24 @@ public class runExperiment : MonoBehaviour
 
         // first place the click into our array for subsequent recording
         expParams.trialD.clickOnsetTime = trialTime;
-        expParams.trialD.targDuration = 0f; //makeGaborTexture.gaborP.sAmp; // what was the value of the current gabor amplitude? 
+        
 
         if (hasResponded || detectIndex <= 0) // if response already processed, eject
         {
             return;
         }
 
-
-        if (expParams.trialD.targPresent == true) // signal present cases (a Gabor was shown)
+    
+        // Use protected variables
+        experimentParameters.DetectionTask taskType = currentDetectionTask;
+        experimentParameters.StimulusType stimType = currentStimulusType;
+        bool targetPresent = currentTargetPresent;
+        char globalLetter = currentGlobalLetter;
+        char localLetter = currentLocalLetter;
+        bool isCongruent = currentIsCongruent;
+        string trialCategory = currentTrialCategory;
+        
+        if (expParams.trialD.targetPresent == true) // signal present cases 
         {
             // HIT or FA based on response mapping:
             if ((responseMap == 1 && playerInput.rightisPressed) || (responseMap == -1 && playerInput.leftisPressed))
@@ -274,7 +280,7 @@ public class runExperiment : MonoBehaviour
             }
 
         }
-        else if (expParams.trialD.targPresent == false) // signal absent yet detected
+        else if (expParams.trialD.targetPresent == false) // signal absent yet detected
         {
 
             // HIT or FA based on response mapping:
@@ -294,14 +300,24 @@ public class runExperiment : MonoBehaviour
             }
 
         }
-
+        // store remaining trial data:
+        
+        expParams.trialD.currentTask = taskType;
+        expParams.trialD.stimulusType = stimType;
+        expParams.trialD.targetPresent = targetPresent;
+        expParams.trialD.globalLetter = globalLetter;
+        expParams.trialD.localLetter = localLetter;
+        expParams.trialD.isCongruent = isCongruent;
+        expParams.trialD.trialCategory = trialCategory;
+        
 
 
         RecordData.extractEventSummary();// = true;// pass to Record Data (after every hit /FA target)
 
         hasResponded = true; // passed to coroutine, avoids processing omitted responses.
 
-        // Now update next Gabor value (after response)
+        // Now update stimulus after each response
+
         // send the information to AdaptiveStaircase and makeGabor.
 
         if (trialCount >= expParams.nstandingStilltrials)
@@ -319,29 +335,23 @@ public class runExperiment : MonoBehaviour
             {
                 nextDuration = adaptiveStaircaseNatural.ProcessResponse(wasCorrect); // return new intensity
             }
-            
 
-            //flip if present/absent on next trial:
-            makeNavonStimulus.navonP.targetPresent = UnityEngine.Random.Range(0f, 1f) < 0.5f ? true : false;   // Changed from 0.66 as we have changed lower asymptote to 0 (pThreshold now 0.5, not 0.75)            
 
-            //apply new intensity 
+            Debug.Log($"[Staircase] Stimulus processed: {(wasCorrect ? "✓" : "✗")} → Next duration: {nextDuration:F3}s");
 
-            // makeNavonStimulus.GenerateNavon(nextDUration); // creates new texture
+            //apply new intensity (targetPresent is randomized inside GenerateNavon)
             makeNavonStimulus.navonP.targDuration= nextDuration;
+            makeNavonStimulus.GenerateNavon(); // creates new texture
 
             //note that this creates the texture , but not applied until ShowNavon();
             Debug.Log("correct: " + expParams.trialD.targCorrect + ", new quest value for staircase [" + blockType + "] = " + nextDuration);
 
-            updateNextNavon = false; // perform once only
         }
         else
         {
-            // just regenerate without updating contrast, provide feedback also.
+            // just regenerate without updating contrast, provide feedback also (targetPresent is randomized inside GenerateNavon).
             Debug.Log("Still in practice trials, regenerating... ");
-            makeNavonStimulus.navonP.targetPresent = UnityEngine.Random.Range(0f, 1f) < 0.5f ? true : false;   // Changed from 0.66 as we have changed lower asymptote to 0 (pThreshold now 0.5, not 0.75)            
-            
-            // makeNavonStimulus.GenerateNavon(makeNavonStimulus.navonP.targDuration); // using the current intensity
-            // makeNavonStimulus.navonP.targDuration= makeNavonStimulus.navonP.targDuration; // using default
+            makeNavonStimulus.GenerateNavon(); // regenerate with current duration
             
             if (expParams.trialD.targCorrect == 1)
             {
@@ -405,7 +415,21 @@ public class runExperiment : MonoBehaviour
         expParams.trialD.trialID = expParams.blockTypeArray[trialCount, 1]; // count within block
         expParams.trialD.isStationary = isStationary;
         expParams.trialD.blockType = blockType; // 0,1,2
-        
+
+        // Set detection task from balanced block assignment
+        int currentBlockID = expParams.blockTypeArray[trialCount, 0];
+        var newTask = expParams.blockDetectionTask[currentBlockID];
+
+        // Regenerate stimulus if the task changed (new block with different target letter)
+        if (makeNavonStimulus.navonP.currentTask != newTask)
+        {
+            makeNavonStimulus.navonP.currentTask = newTask;
+            makeNavonStimulus.GenerateNavon();
+        }
+        else
+        {
+            makeNavonStimulus.navonP.currentTask = newTask;
+        }
 
         //updated phases for flow managers:
         RecordData.recordPhase = RecordData.phase.collectResponse;

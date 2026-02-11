@@ -999,9 +999,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c042fe66fa79f7a46a6a934d4362acd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playinVR: 1
+  playinVR: 0
   participant: matt-test-full
-  skipWalkCalibration: 0
+  skipWalkCalibration: 1
   responseMapping: L:absent R:present
   trialCount: 0
   trialTime: 0
@@ -1015,8 +1015,14 @@ MonoBehaviour:
   collectTrialSummary: 0
   collectEventSummary: 0
   hasResponded: 0
+  currentDetectionTask: 0
+  currentStimulusType: 0
+  currentTargetPresent: 0
+  currentGlobalLetter: 0
+  currentLocalLetter: 0
+  currentIsCongruent: 0
+  currentTrialCategory: 
   responseforPresentAbsent: []
-  Questvalue_perstair: []
   TextScreen: {fileID: 1948162547}
   TextFeedback: {fileID: 779891527}
   StimulusScreen: {fileID: 1783951019}
@@ -1063,18 +1069,14 @@ MonoBehaviour:
   preTrialsec: 0
   responseWindow: 0
   targDurationsec: 0
-  targetAlpha: 0
   nTrials: 0
   minITI: 0
   maxITI: 0
   jittermax: 0
-  targRange: []
-  prevCalibContrast: []
-  myCalibContrast: []
   nTrialsperBlock: 0
   nBlocks: 0
   nPracticeBlocks: 0
-  nBlocktypes: 0
+  nWalkSpeeds: 0
   nstandingStilltrials: 0
   preTrialColor: {r: 0, g: 0, b: 0, a: 0}
   probeColor: {r: 0, g: 0, b: 0, a: 0}
@@ -1094,7 +1096,14 @@ MonoBehaviour:
     targResponseTime: 0
     stairCase: 0
     isStationary: 0
-    signalPresent: 0
+    targPresent: 0
+    currentTask: 0
+    stimulusType: 0
+    globalLetter: 0
+    localLetter: 0
+    targetPresent: 0
+    isCongruent: 0
+    trialCategory: 
   startZone: {fileID: 1492984457}
   endZone: {fileID: 942580339}
 --- !u!114 &731557936
@@ -1190,9 +1199,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   staircaseType: 1
-  initialIntensity: 1
-  minIntensity: 0.01
-  maxIntensity: 2
+  initialDuration: 0.6
+  minDuration: 0.01
+  maxDuration: 1
   initialStepSize: 0.2
   finalStepSize: 0.002
   trialsToReduceStep: 4
@@ -1219,9 +1228,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   staircaseType: 1
-  initialIntensity: 1
-  minIntensity: 0.01
-  maxIntensity: 2
+  initialDuration: 0.6
+  minDuration: 0.01
+  maxDuration: 1
   initialStepSize: 0.2
   finalStepSize: 0.002
   trialsToReduceStep: 4
@@ -2962,6 +2971,7 @@ GameObject:
   - component: {fileID: 1783951021}
   - component: {fileID: 1783951024}
   - component: {fileID: 1783951025}
+  - component: {fileID: 1783951026}
   m_Layer: 0
   m_Name: Screen
   m_TagString: Untagged
@@ -3075,9 +3085,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c00338d74520d7241b9a8f8736da4ba1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offsetX: 0
-  offsetY: 0
-  RunExperiment: {fileID: 0}
 --- !u!114 &1783951025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3091,6 +3098,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   processNoResponse: 0
+  scriptHolder: {fileID: 731557924}
+--- !u!114 &1783951026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783951019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5f377c4af8b74898bfb3ae138d06a04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  offsetX: 0
+  offsetY: 0
   scriptHolder: {fileID: 731557924}
 --- !u!1 &1948162547
 GameObject:
@@ -3243,6 +3265,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scriptHolder: {fileID: 731557924}
+  StimulusScreen: {fileID: 1783951019}
   TextBG: {fileID: 72365016}
   isInitialized: 0
 --- !u!1 &2098280596

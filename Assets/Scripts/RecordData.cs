@@ -36,9 +36,9 @@ public class RecordData : MonoBehaviour
     //access the gaze data
     float trialTime;
     //flow handler:
-    private bool dataSaveinprogres;
+    
     string gazeObject;
-    string projectName = "VIS2AFC_v2";
+    string projectName = "DualDetection_ET_Walking";
 
 
     public enum phase // these fields can be set by other scripts (runExperiment) to control record state.
@@ -67,7 +67,7 @@ public class RecordData : MonoBehaviour
         Debug.Log("saving to location " + outputFolder);
 
         startTime = System.DateTime.Now.ToString("yyyy-MM-dd-hh-mm");
-        dataSaveinprogres = false; // 
+        
 
         // only create if playing in VR. 
         if (runExperiment.playinVR)
@@ -108,7 +108,7 @@ public class RecordData : MonoBehaviour
         
             writeFiletoDisk();
             
-            dataSaveinprogres = false;
+            
         }
 
     }
@@ -229,18 +229,24 @@ public class RecordData : MonoBehaviour
 
 
         // include toneAmp
-        string columnNamesSumm = "date," +
-           // add experiment: walkingTracking2D
+        string columnNamesSumm = "date," +           
            "participant," +
            "respmap," +
            "trial," +
            "block," +
            "trialID," +
            "walkSpeed," +           
+           "detectionTask," +           
+           "stimulusType," +
+           "globalLetter," +
+           "localLetter," +
+           "targetPresent," +
+           "isCongruent," +
+           "trialCategory," +
+           "stimulusDuration," +
            "targOnset," +
-           "targRT," +
-           "targDuration," +
-           "signalPresent," +
+           "clickOnset," +
+           "reactionTime," +
            "targResponse," +
            "correctResponse";  
 
@@ -284,21 +290,29 @@ public class RecordData : MonoBehaviour
 
 
         // FILL DATA:
-        //    "date," +
         //   "participant," +
         //    "respmap," +
         //    "trial," +
         //    "block," +
         //    "trialID," +
         //    "walkSpeed," +           
+        //    "detectionTask," +           
+        //    "stimulusType," +
+        //    "globalLetter," +
+        //    "localLetter," +
+        //    "targetPresent," +
+        //    "isCongruent," +
+        //    "trialCategory," +
+        //    "stimulusDuration," +
         //    "targOnset," +
-        //    "targRT," +
-        //    "intensity," +
-        //    "signalPresent," +
+        //    "clickOnset," +
+        //    "reactionTime," +
         //    "targResponse," +
         //    "correctResponse";  
 
-
+        // Calculate reaction time (RT - Onset)
+        float reactionTime = experimentParameters.trialD.clickOnsetTime - experimentParameters.trialD.targOnsetTime;
+        
         string data =
                   System.DateTime.Now.ToString("yyyy-MM-dd") + "," +
                   runExperiment.participant + "," +
@@ -307,14 +321,19 @@ public class RecordData : MonoBehaviour
                   experimentParameters.trialD.blockID + "," +
                   experimentParameters.trialD.trialID + "," +
                   experimentParameters.trialD.blockType + "," +
+                   experimentParameters.trialD.currentTask + "," +
+                  experimentParameters.trialD.stimulusType + "," +
+                  experimentParameters.trialD.globalLetter + "," +
+                  experimentParameters.trialD.localLetter + "," +
+                  experimentParameters.trialD.targetPresent + "," +
+                  experimentParameters.trialD.isCongruent + "," +
+                  experimentParameters.trialD.trialCategory + "," +
+                  experimentParameters.targDurationsec + "," +
                   experimentParameters.trialD.targOnsetTime + "," +
                   experimentParameters.trialD.clickOnsetTime + "," +
-                  experimentParameters.trialD.targDuration + "," +
-                  experimentParameters.trialD.targPresent + "," +
-                  experimentParameters.trialD.targResponse + "," + // coded as present absent [1,0].
-                  experimentParameters.trialD.targCorrect;
-        //trialParameters.trialD.walkSpeed + "," +
-        //trialParameters.trialD.qStep;
+                  reactionTime + "," +
+                  experimentParameters.trialD.targResponse + "," +
+                  experimentParameters.trialD.targCorrect ;
 
 
 

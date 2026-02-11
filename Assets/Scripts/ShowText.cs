@@ -25,9 +25,12 @@ public class ShowText : MonoBehaviour
 
     [SerializeField]
     GameObject scriptHolder;
+    [SerializeField]
+    GameObject StimulusScreen;
     experimentParameters expParams;
     runExperiment runExperiment;
     controlWalkingGuide controlWalkingGuide;
+    makeNavonStimulus makeNavonStimulus;
     
     [SerializeField]
     GameObject TextBG; //assign in inspector
@@ -38,6 +41,7 @@ public class ShowText : MonoBehaviour
         expParams = scriptHolder.GetComponent<experimentParameters>();
         runExperiment = scriptHolder.GetComponent<runExperiment>();
         controlWalkingGuide = scriptHolder.GetComponent<controlWalkingGuide>();
+        makeNavonStimulus = StimulusScreen.GetComponent<makeNavonStimulus>();
 
         // Initialize text dictionary, without dynamic strings.
         textStrings = new Dictionary<TextType, string>
@@ -46,8 +50,7 @@ public class ShowText : MonoBehaviour
 
             [TextType.Welcome] = "", // updated below
 
-            [TextType.CalibrationComplete] = "Well done! \n  Let's now practice the main task standing still. \n " +
-            "Listen to instructions, then pull  <both triggers> to begin a practice trial \n\n Remember: \n\n " + runExperiment.responseMapping, //called from WalkSpeedCalibrator.
+            [TextType.CalibrationComplete] = "", //dynamically updated below
 
             [TextType.TrialStart] = "", //dynamically updated with trial/block index below
             // ... add other strings
@@ -108,19 +111,33 @@ public class ShowText : MonoBehaviour
                     nextTrialNum = expParams.trialD.trialID + 2; // starts at zero, but new trial next trial (+1)
                     nextBlockNum = expParams.trialD.blockID + 1; // starts at zero, but same block next trial.
                 }
-                // this one needs to be updated with the current trial and block info. +2 since Unity starts index at 0 (+1), and we are preparing the next trial (+1).// 
+                // Determine the target letter for the next trial
+                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
+
+                // this one needs to be updated with the current trial and block info. +2 since Unity starts index at 0 (+1), and we are preparing the next trial (+1).//
                 textMesh.text = "Next trial, you will be " + speedText + "." + "\n\n" + " Pull both triggers to begin Trial " + (nextTrialNum) + " / " + expParams.nTrialsperBlock + "\n\n" +
-                "(Block " + (nextBlockNum) + " of " + expParams.nBlocks + "). \n\n" + "Remember: \n\n " + runExperiment.responseMapping;
+                "(Block " + (nextBlockNum) + " of " + expParams.nBlocks + "). \n\n" +
+                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "Remember: \n\n " + runExperiment.responseMapping;
                     
                 TextBG.SetActive(true); //show background to enhance text.
             }
+            else if (textType == TextType.CalibrationComplete)
+            {
+                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
+                textMesh.text = "Well done! \n  Let's now practice the main task standing still. \n " +
+                "Listen to instructions, then pull  <both triggers> to begin a practice trial \n\n" +
+                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "Remember: \n\n " + runExperiment.responseMapping;
+                TextBG.SetActive(true);
+            }
             else if (textType == TextType.Welcome) // update dynamically with response mapping
             {
-             
-                textStrings[TextType.Welcome] = "Welcome! \n Please listen to your experimenter for instructions. \n\n Remember: \n\n " + runExperiment.responseMapping;
-
-                textMesh.text = textStrings[textType];
-                TextBG.SetActive(true); //show background to enhance text.   
+                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
+                textMesh.text = "Welcome! \n Please listen to your experimenter for instructions. \n\n" +
+                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "Remember: \n\n " + runExperiment.responseMapping;
+                TextBG.SetActive(true); //show background to enhance text.
             } else
             {
                 textMesh.text = textStrings[textType];

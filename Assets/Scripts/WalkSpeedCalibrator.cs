@@ -22,8 +22,8 @@ public class WalkSpeedCalibrator : MonoBehaviour
     public float slowSpeed = 0f; // 60% of normSpeed.
     public float currentTimer = 0f;
     public bool timerRunning = false;
-    private bool playerInStartZone = false;
-    private bool playerInEndZone = false;
+    // private bool playerInStartZone;
+    // private bool playerInEndZone ;
     
     private List<float> lapTimes = new List<float>();
     public int currentLap = 0;
@@ -166,7 +166,7 @@ public class WalkSpeedCalibrator : MonoBehaviour
     
     public void OnPlayerEnterStartZone()
     {
-        playerInStartZone = true;
+        // playerInStartZone = true;
         
         // show calibration state (laps remaining).
         CalibrationTextStartzone.UpdateText(CalibrationText.TextType.CalibState);
@@ -186,7 +186,7 @@ public class WalkSpeedCalibrator : MonoBehaviour
     
     public void OnPlayerExitStartZone()
     {
-        playerInStartZone = false;
+        // playerInStartZone = false;
         
         CalibrationTextStartzone.UpdateText(CalibrationText.TextType.CalibState);
         CalibrationTextEndzone.UpdateText(CalibrationText.TextType.CalibState);
@@ -205,7 +205,7 @@ public class WalkSpeedCalibrator : MonoBehaviour
         CalibrationTextStartzone.UpdateText(CalibrationText.TextType.CalibState);
         CalibrationTextEndzone.UpdateText(CalibrationText.TextType.CalibState);
 
-        playerInEndZone = true;
+        // playerInEndZone = true;
         
         if (currentState == CalibrationState.TimingToEnd)
         {
@@ -221,7 +221,7 @@ public class WalkSpeedCalibrator : MonoBehaviour
     
     public void OnPlayerExitEndZone()
     {
-        playerInEndZone = false;
+        // playerInEndZone = false;
 
         CalibrationTextStartzone.UpdateText(CalibrationText.TextType.CalibState);
         CalibrationTextEndzone.UpdateText(CalibrationText.TextType.CalibState);

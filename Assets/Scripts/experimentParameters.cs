@@ -34,12 +34,14 @@ public class experimentParameters : MonoBehaviour
     
 
     //Experiment Design parameers:
-    public int nTrialsperBlock, nBlocks, nPracticeBlocks, nBlocktypes, nstandingStilltrials;
+    public int nTrialsperBlock, nBlocks, nPracticeBlocks, nWalkSpeeds, nstandingStilltrials;
     private int[] blockTypelist;
     [HideInInspector]
     public int[,] blockTypeArray; //nTrials x 3 (block, trialID, type)
     private float propSlowSpeed, propNaturalSpeed;
-    //reference to walkCalibrator to get speeds: 
+    [HideInInspector]
+    public DetectionTask[] blockDetectionTask; // maps blockID → DetectE or DetectT (balanced, shuffled)
+    //reference to walkCalibrator to get speeds:
     WalkSpeedCalibrator walkCalibrator;
     makeNavonStimulus makeNavonStimulus;
     runExperiment runExperiment;
@@ -122,9 +124,9 @@ public class experimentParameters : MonoBehaviour
 
 
 
-        preTrialsec = .8f; // time before trial starts, to show ready state.
-        responseWindow = 0.8f; // time to respond after target onset.
-        targDurationsec = 0.2f; // time target is visible.
+        preTrialsec = .5f; // time before trial starts, to show ready state.
+        responseWindow = 0.5f; // time to respond after target onset.
+        targDurationsec = 0.4f; // Initial value (start easy) to be updated by staricase.
         nstandingStilltrials = 2; // ensure mod%2 to not mess with gide positioning.
         
         jittermax = 0.25f; // in seconds, will be a uniform distribution from 0  + jittermax.
@@ -134,7 +136,7 @@ public class experimentParameters : MonoBehaviour
         // targetColor = new Color(.55f, .55f, .55f, targetAlpha); // light grey (start easy, become difficult).
 
 
-        nBlocktypes = 2; // [0,1,2];
+        nWalkSpeeds = 2; // [0,1,2]; 1 and 2 are slow and natural pace
         
         //
         nTrialsperBlock = 20; // 
@@ -155,10 +157,10 @@ public class experimentParameters : MonoBehaviour
 
         int nTrials = nTrialsperBlock * nBlocks;
 
-        float[] walkDurs = new float[nBlocktypes];
+        // float[] walkDurs = new float[nWalkSpeeds];
 
-        walkDurs[0] = 15f; //slowDuration;
-        walkDurs[1] = 9f; //natural;
+        // walkDurs[0] = 15f; //slowDuration;
+        // walkDurs[1] = 9f; //natural;
 
 
         // also create wrapper to determine block conditions.
@@ -172,10 +174,12 @@ public class experimentParameters : MonoBehaviour
 
         // FILL BLOCKS, but we want a lower proportion of slow (to accomodate) for more trials in that condition.
 
-        int[] walktypeArray = new int[nBlocktypes];
-        walktypeArray[0] = 1;
-        walktypeArray[1] = 2;
-        
+        int[] walktypeArray = new int[nWalkSpeeds];
+        for (int i = 0; i < nWalkSpeeds; i++)
+        {
+            walktypeArray[i] = i + 1;
+        }
+
         // Calculate how many blocks should be of each type
         int nSlowBlocks = Mathf.RoundToInt((nBlocks-nPracticeBlocks) * propSlowSpeed);
         int nFastBlocks = (nBlocks-nPracticeBlocks) - nSlowBlocks;
@@ -246,11 +250,36 @@ public class experimentParameters : MonoBehaviour
             }
 
         }
+
+        // Create balanced detection task assignment (DetectE / DetectT) for all blocks.
+        // Practice block(s) default to DetectE; experimental blocks are 50/50 shuffled.
+        blockDetectionTask = new DetectionTask[nBlocks];
+
+        for (int i = 0; i < nPracticeBlocks; i++)
+        {
+            blockDetectionTask[i] = DetectionTask.DetectE;
+        }
+
+        int nExpBlocks = nBlocks - nPracticeBlocks;
+        int nDetectE = nExpBlocks / 2;
+        int nDetectT = nExpBlocks - nDetectE;
+
+        int[] taskList = new int[nExpBlocks];
+        for (int i = 0; i < nDetectE; i++) taskList[i] = 0; // DetectE
+        for (int i = nDetectE; i < nExpBlocks; i++) taskList[i] = 1; // DetectT
+        shuffleArray(taskList);
+
+        for (int i = 0; i < nExpBlocks; i++)
+        {
+            blockDetectionTask[nPracticeBlocks + i] = (DetectionTask)taskList[i];
+        }
+
+        Debug.Log("Detection task assignment per block: " + string.Join(", ", blockDetectionTask));
     }
 
 
-    /// 
-    /// 
+    ///
+    ///
     /// METHODS called:
 
     

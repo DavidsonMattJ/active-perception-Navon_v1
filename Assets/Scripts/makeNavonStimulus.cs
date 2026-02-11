@@ -15,7 +15,7 @@ public class makeNavonStimulus : MonoBehaviour
     Renderer rend;
 
     Texture2D currentTexture, nextTexture, maskTexture, fixationTexture;
-
+    experimentParameters experimentParameters;
     public struct NavonParams
     {
         public float maskScale, px, py;
@@ -83,10 +83,12 @@ public class makeNavonStimulus : MonoBehaviour
         {0,1,0,0,0,1,0}   // Two thin vertical bars
     };
 
+    [SerializeField]
+    GameObject scriptHolder;
     void Start()
     {
         rend = GetComponent<Renderer>();
-        
+        experimentParameters = scriptHolder.GetComponent<experimentParameters>();
         offsetX = Random.Range(100f, 200f);
         offsetY = Random.Range(100f, 200f);
 
@@ -101,6 +103,7 @@ public class makeNavonStimulus : MonoBehaviour
         navonP.localLetter = 'E';
         navonP.isCongruent = true;
         navonP.trialCategory = "Active";
+        navonP.targDuration =experimentParameters.targDurationsec;
 
         currentTexture = new Texture2D(width, height);
         for (int ix = 0; ix < width; ix++)
