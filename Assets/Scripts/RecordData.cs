@@ -268,72 +268,48 @@ public class RecordData : MonoBehaviour
 
 
     // use a method to perform on relevant frame at trial end.
-    public void extractEventSummary()
+    // Called once per participant response. Receives the immutable StimulusEvent
+    // that was created at stimulus onset — this guarantees the logged data matches
+    // what was actually shown, regardless of any subsequent state changes.
+    //
+    // Data sources:
+    //   evt            → stimulus properties (what was shown, when it appeared)
+    //   trialD         → trial context (blockID, trialID, blockType) and response (targCorrect, targResponse, clickOnsetTime)
+    //   runExperiment  → session-level info (participant, responseMapping, trialCount)
+    public void extractEventSummary(experimentParameters.StimulusEvent evt)
     {
 
-        // at the end of each trial (walk trajectory), export the details as a summary.
-        // col names specified below (createSummaryTextfile)
+        // CSV columns (same order as header in createSummaryTextfile):
+        //   date, participant, respmap, trial, block, trialID, walkSpeed,
+        //   detectionTask, stimulusType, globalLetter, localLetter,
+        //   targetPresent, isCongruent, trialCategory,
+        //   stimulusDuration, targOnset, clickOnset, reactionTime,
+        //   targResponse, correctResponse
 
-        // convert data of interest:
+        // Calculate reaction time: click time minus stimulus onset (both trial-relative)
+        float reactionTime = experimentParameters.trialD.clickOnsetTime - evt.onsetTime;
 
-        //float[] FA_rts = runExperiment.FA_withintrial.ToArray();
-        //string strfts = "";
-        //if (FA_rts.Length > 0)
-        //{
-        //    // convert float array to string:
-        //    for (var i = 0; i < FA_rts.Length; i++)
-        //    {
-        //        strfts = strfts + FA_rts[i].ToString() + ","; // separates into columns.
-        //    }
-        //}
-
-
-
-        // FILL DATA:
-        //   "participant," +
-        //    "respmap," +
-        //    "trial," +
-        //    "block," +
-        //    "trialID," +
-        //    "walkSpeed," +           
-        //    "detectionTask," +           
-        //    "stimulusType," +
-        //    "globalLetter," +
-        //    "localLetter," +
-        //    "targetPresent," +
-        //    "isCongruent," +
-        //    "trialCategory," +
-        //    "stimulusDuration," +
-        //    "targOnset," +
-        //    "clickOnset," +
-        //    "reactionTime," +
-        //    "targResponse," +
-        //    "correctResponse";  
-
-        // Calculate reaction time (RT - Onset)
-        float reactionTime = experimentParameters.trialD.clickOnsetTime - experimentParameters.trialD.targOnsetTime;
-        
         string data =
                   System.DateTime.Now.ToString("yyyy-MM-dd") + "," +
                   runExperiment.participant + "," +
                   runExperiment.responseMapping + "," +
                   runExperiment.trialCount + "," +
-                  experimentParameters.trialD.blockID + "," +
-                  experimentParameters.trialD.trialID + "," +
-                  experimentParameters.trialD.blockType + "," +
-                   experimentParameters.trialD.currentTask + "," +
-                  experimentParameters.trialD.stimulusType + "," +
-                  experimentParameters.trialD.globalLetter + "," +
-                  experimentParameters.trialD.localLetter + "," +
-                  experimentParameters.trialD.targetPresent + "," +
-                  experimentParameters.trialD.isCongruent + "," +
-                  experimentParameters.trialD.trialCategory + "," +
-                  experimentParameters.targDurationsec + "," +
-                  experimentParameters.trialD.targOnsetTime + "," +
-                  experimentParameters.trialD.clickOnsetTime + "," +
+                  experimentParameters.trialD.blockID + "," +       // trial context (from trialD)
+                  experimentParameters.trialD.trialID + "," +       // trial context
+                  experimentParameters.trialD.blockType + "," +     // trial context
+                  evt.detectionTask + "," +                         // stimulus data (from event)
+                  evt.stimulusType + "," +                          // stimulus data
+                  evt.globalLetter + "," +                          // stimulus data
+                  evt.localLetter + "," +                           // stimulus data
+                  evt.targetPresent + "," +                         // stimulus data
+                  evt.isCongruent + "," +                           // stimulus data
+                  evt.trialCategory + "," +                         // stimulus data
+                  experimentParameters.targDurationsec + "," +      // session parameter
+                  evt.onsetTime + "," +                             // stimulus data
+                  experimentParameters.trialD.clickOnsetTime + "," +// response data (from trialD)
                   reactionTime + "," +
-                  experimentParameters.trialD.targResponse + "," +
-                  experimentParameters.trialD.targCorrect ;
+                  experimentParameters.trialD.targResponse + "," +  // response data
+                  experimentParameters.trialD.targCorrect;
 
 
 

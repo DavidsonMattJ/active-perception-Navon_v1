@@ -119,26 +119,21 @@ public class targetAppearance : MonoBehaviour
                     runExperiment.detectIndex = itargindx + 1; //  click responses collected in this response window will be 'correct'
                     runExperiment.hasResponded = false;  //switched if targ detected.
                     
-                    // Store in trial data
-                    expParams.trialD.targOnsetTime = runExperiment.trialTime;
-                    expParams.trialD.stimulusType = makeNavonStimulus.navonP.stimulusType;
-                    expParams.trialD.targetPresent = makeNavonStimulus.navonP.targetPresent;                    
-                    expParams.trialD.globalLetter = makeNavonStimulus.navonP.globalLetter;
-                    expParams.trialD.localLetter = makeNavonStimulus.navonP.localLetter;
-                    expParams.trialD.isCongruent = makeNavonStimulus.navonP.isCongruent;
-                    expParams.trialD.trialCategory = makeNavonStimulus.navonP.trialCategory;
-                    
-                    // Store in protected variables
-                    runExperiment.currentDetectionTask = makeNavonStimulus.navonP.currentTask;
-                    runExperiment.currentStimulusType = makeNavonStimulus.navonP.stimulusType;
-                    runExperiment.currentTargetPresent = makeNavonStimulus.navonP.targetPresent;
-                    runExperiment.currentGlobalLetter = makeNavonStimulus.navonP.globalLetter;
-                    runExperiment.currentLocalLetter = makeNavonStimulus.navonP.localLetter;
-                    runExperiment.currentIsCongruent = makeNavonStimulus.navonP.isCongruent;
-                    runExperiment.currentTrialCategory = makeNavonStimulus.navonP.trialCategory;
-
-
-                    // 
+                    // Freeze all stimulus properties into an immutable event at this
+                    // exact moment. Once created, this snapshot cannot be changed —
+                    // so even when GenerateNavon() later overwrites navonP for the
+                    // next stimulus, the response handler and data recorder will still
+                    // see the correct values for *this* presentation.
+                    runExperiment.currentEvent = new experimentParameters.StimulusEvent(
+                        detectionTask: makeNavonStimulus.navonP.currentTask,
+                        stimulusType:  makeNavonStimulus.navonP.stimulusType,
+                        globalLetter:  makeNavonStimulus.navonP.globalLetter,
+                        localLetter:   makeNavonStimulus.navonP.localLetter,
+                        targetPresent: makeNavonStimulus.navonP.targetPresent,
+                        isCongruent:   makeNavonStimulus.navonP.isCongruent,
+                        trialCategory: makeNavonStimulus.navonP.trialCategory,
+                        onsetTime:     runExperiment.trialTime
+                    );
 
                     
                     // Use adaptive stimulus duration

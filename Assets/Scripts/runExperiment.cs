@@ -39,21 +39,13 @@ public class runExperiment : MonoBehaviour
     [HideInInspector]
     public bool isStationary, collectTrialSummary, collectEventSummary, hasResponded;
 
-    // Protected stimulus data
+    // Immutable snapshot of the current stimulus, created by targetAppearance
+    // at the moment the stimulus is shown. Because StimulusEvent is a readonly
+    // struct, it cannot be mutated after creation — so even if GenerateNavon()
+    // overwrites navonP for the next trial, this event remains intact for
+    // response scoring and data recording.
     [HideInInspector]
-    public experimentParameters.DetectionTask currentDetectionTask;
-    [HideInInspector]
-    public experimentParameters.StimulusType currentStimulusType;
-    [HideInInspector]
-    public bool currentTargetPresent;
-    [HideInInspector]
-    public char currentGlobalLetter;
-    [HideInInspector]
-    public char currentLocalLetter;
-    [HideInInspector]
-    public bool currentIsCongruent;
-    [HideInInspector]
-    public string currentTrialCategory;
+    public experimentParameters.StimulusEvent currentEvent;
     private bool updateNextNavon;
     
 
@@ -251,68 +243,49 @@ public class runExperiment : MonoBehaviour
             return;
         }
 
-    
-        // Use protected variables
-        experimentParameters.DetectionTask taskType = currentDetectionTask;
-        experimentParameters.StimulusType stimType = currentStimulusType;
-        bool targetPresent = currentTargetPresent;
-        char globalLetter = currentGlobalLetter;
-        char localLetter = currentLocalLetter;
-        bool isCongruent = currentIsCongruent;
-        string trialCategory = currentTrialCategory;
-        
-        if (expParams.trialD.targetPresent == true) // signal present cases 
+        // Read the immutable stimulus event — this was frozen at stimulus onset
+        // by targetAppearance, so it is safe to read even if GenerateNavon()
+        // has already prepared the next stimulus in the background.
+        var evt = currentEvent;
+
+        // Score the response against the stimulus that was actually shown.
+        // evt.targetPresent tells us whether the search target (E or T) was
+        // in the Navon figure; responseMap encodes the button mapping.
+        if (evt.targetPresent) // signal present cases
         {
-            // HIT or FA based on response mapping:
             if ((responseMap == 1 && playerInput.rightisPressed) || (responseMap == -1 && playerInput.leftisPressed))
             {
                 Debug.Log("Hit!");
-                // HIT!           
                 expParams.trialD.targCorrect = 1;
                 expParams.trialD.targResponse = 1;
             }
             else if ((responseMap == 1 && playerInput.leftisPressed) || (responseMap == -1 && playerInput.rightisPressed))
             {
                 Debug.Log("Miss!");
-
                 expParams.trialD.targCorrect = 0;
                 expParams.trialD.targResponse = 0;
             }
-
         }
-        else if (expParams.trialD.targetPresent == false) // signal absent yet detected
+        else // signal absent
         {
-
-            // HIT or FA based on response mapping:
             if ((responseMap == 1 && playerInput.rightisPressed) || (responseMap == -1 && playerInput.leftisPressed))
             {
                 Debug.Log("False Alarm!");
-                // HIT!           
                 expParams.trialD.targCorrect = 0;
                 expParams.trialD.targResponse = 1;
             }
             else if ((responseMap == 1 && playerInput.leftisPressed) || (responseMap == -1 && playerInput.rightisPressed))
             {
                 Debug.Log("Correct Rejection!");
-
                 expParams.trialD.targCorrect = 1;
                 expParams.trialD.targResponse = 0;
             }
-
         }
-        // store remaining trial data:
-        
-        expParams.trialD.currentTask = taskType;
-        expParams.trialD.stimulusType = stimType;
-        expParams.trialD.targetPresent = targetPresent;
-        expParams.trialD.globalLetter = globalLetter;
-        expParams.trialD.localLetter = localLetter;
-        expParams.trialD.isCongruent = isCongruent;
-        expParams.trialD.trialCategory = trialCategory;
-        
 
-
-        RecordData.extractEventSummary();// = true;// pass to Record Data (after every hit /FA target)
+        // Pass the immutable event to the data recorder. RecordData reads
+        // trial context (blockID, trialID, etc.) from trialD, and stimulus
+        // data (letters, targetPresent, etc.) from the event — no write-back needed.
+        RecordData.extractEventSummary(currentEvent);
 
         hasResponded = true; // passed to coroutine, avoids processing omitted responses.
 

@@ -80,24 +80,72 @@ public class experimentParameters : MonoBehaviour
         DetectE = 0,  // Participant looking for E
         DetectT = 1   // Participant looking for T
     }
-    //  Create a public structure, for caching trial parameters to be read/recorded as we progress.
-    // Note some of these are specific to the experimental type (Gabor, Navon, etc). Adjust as needed
+    // ──────────────────────────────────────────────────────────────────
+    // StimulusEvent: An immutable snapshot of what was shown on screen.
+    //
+    // Created once by targetAppearance at stimulus onset, then passed
+    // through the pipeline without mutation:
+    //   targetAppearance creates it  →  runExperiment scores against it
+    //                                →  RecordData logs it to CSV
+    //
+    // Because it is a readonly struct, its fields cannot be changed after
+    // construction. This eliminates the data-race where stimulus fields
+    // could be overwritten (by GenerateNavon) before the response handler
+    // or data recorder had finished reading them.
+    // ──────────────────────────────────────────────────────────────────
+    public readonly struct StimulusEvent
+    {
+        public readonly DetectionTask detectionTask;   // Which letter the participant is searching for (E or T)
+        public readonly StimulusType stimulusType;     // Which of the 12 stimulus configurations was shown
+        public readonly char globalLetter;             // The large (global) letter in the Navon figure
+        public readonly char localLetter;              // The small (local) letters composing the figure
+        public readonly bool targetPresent;            // Was the search target (E or T) present in the figure?
+        public readonly bool isCongruent;              // Were global and local letters the same?
+        public readonly string trialCategory;          // "Active" (target present) or "Inactive" (target absent)
+        public readonly float onsetTime;               // Trial-relative time (seconds) when stimulus appeared
+
+        public StimulusEvent(
+            DetectionTask detectionTask, StimulusType stimulusType,
+            char globalLetter, char localLetter,
+            bool targetPresent, bool isCongruent,
+            string trialCategory, float onsetTime)
+        {
+            this.detectionTask = detectionTask;
+            this.stimulusType = stimulusType;
+            this.globalLetter = globalLetter;
+            this.localLetter = localLetter;
+            this.targetPresent = targetPresent;
+            this.isCongruent = isCongruent;
+            this.trialCategory = trialCategory;
+            this.onsetTime = onsetTime;
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // trialData: Mutable per-trial context and response data.
+    //
+    // Set in two phases:
+    //   1. Trial start  (runExperiment.startTrial):  trialNumber, blockID, trialID, blockType, isStationary
+    //   2. Response time (runExperiment.processPlayerResponse):  clickOnsetTime, targCorrect, targResponse
+    //
+    // Stimulus-specific fields (what was shown, when it appeared, etc.)
+    // are NOT stored here — they live in the immutable StimulusEvent
+    // instead. This keeps trialData's role clear: trial context + response.
+    // ──────────────────────────────────────────────────────────────────
     [System.Serializable]
     public struct trialData
     {
-        public int trialNumber, blockID, trialID, trialType, walkSpeed, blockType, targCorrect;
-        public float targDuration,  targOnsetTime, clickOnsetTime, targResponse, targResponseTime, stairCase;
-        public bool isStationary, targPresent;
-        
-        // Detection task and stimulus info
-        public DetectionTask currentTask;  // Which letter is the target (E or T)?
-        public StimulusType stimulusType;  // Which of the 12 stimulus types was shown?
-        public char globalLetter;
-        public char localLetter;
-        public bool targetPresent;         // Is the target letter (E or T) present?
-        public bool isCongruent;           // Are global and local the same letter?
-        public string trialCategory;       // "Active" or "Inactive"
+        // Trial context — set once at trial start
+        public int trialNumber, blockID, trialID, trialType, walkSpeed, blockType;
+        public bool isStationary;
 
+        // Response data — set when participant responds
+        public float clickOnsetTime;
+        public int targCorrect;      // 1 = correct (hit or correct rejection), 0 = incorrect (miss or false alarm)
+        public float targResponse;   // 1 = "present" response, 0 = "absent" response
+
+        // Reserved for staircase / future use
+        public float targDuration, targResponseTime, stairCase;
     }
 
     public trialData trialD;
