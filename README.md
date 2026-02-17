@@ -1,1 +1,1 @@
-# active-perception-VIS2AFC_v2
+# active-perception-Navon-v1
