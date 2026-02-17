@@ -70,8 +70,8 @@ public class runExperiment : MonoBehaviour
     targetAppearance targetAppearance;
     RecordData RecordData;
     // QuestStaircase QuestStaircase;
-    AdaptiveStaircaseSlow adaptiveStaircaseSlow;
-    AdaptiveStaircaseNatural adaptiveStaircaseNatural;
+    AdaptiveStaircase adaptiveStaircase;
+    
     
     makeNavonStimulus makeNavonStimulus;
 
@@ -85,8 +85,8 @@ public class runExperiment : MonoBehaviour
     {
 
 
-        adaptiveStaircaseSlow = GetComponent<AdaptiveStaircaseSlow>();
-        adaptiveStaircaseNatural = GetComponent<AdaptiveStaircaseNatural>();
+        adaptiveStaircase = GetComponent<AdaptiveStaircase>();
+        
         playerInput = GetComponent<CollectPlayerInput>();
         expParams = GetComponent<experimentParameters>();
         controlWalkingGuide = GetComponent<controlWalkingGuide>();
@@ -290,8 +290,8 @@ public class runExperiment : MonoBehaviour
         hasResponded = true; // passed to coroutine, avoids processing omitted responses.
 
         // Now update stimulus after each response
+        // send the information to AdaptiveStaircase and prepare next comparison.
 
-        // send the information to AdaptiveStaircase and makeGabor.
 
         if (trialCount >= expParams.nstandingStilltrials)
         {
@@ -300,13 +300,12 @@ public class runExperiment : MonoBehaviour
 
             bool wasCorrect = expParams.trialD.targCorrect == 1 ? true : false; // return true or flse based on targCorrect [1,0].
 
-            if (expParams.trialD.blockType == 1) //slow speed
+                // Map blockType to condition label for the staircase
+            string condition = GetConditionLabel(expParams.trialD.blockType);
+
+             if (condition != null)
             {
-             nextDuration = adaptiveStaircaseSlow.ProcessResponse(wasCorrect); 
-            } // return new intensity
-            else if (expParams.trialD.blockType == 2) //natural speed
-            {
-                nextDuration = adaptiveStaircaseNatural.ProcessResponse(wasCorrect); // return new intensity
+                nextDuration = adaptiveStaircase.ProcessResponse(condition, wasCorrect);
             }
 
 
@@ -445,6 +444,20 @@ public class runExperiment : MonoBehaviour
 
     }
 
+     /// <summary>
+    /// Maps a blockType integer to a condition label for the adaptive staircase.
+    /// Returns null for stationary trials (blockType 0) which don't use the staircase.
+    /// Add new entries here if new walking conditions are added.
+    /// </summary>
+    string GetConditionLabel(int blockType)
+    {
+        switch (blockType)
+        {
+            case 1: return "slow";
+            case 2: return "natural";
+            default: return null; // stationary — no staircase
+        }
+    }
     void assignResponses()
     {
         bool switchmapping = UnityEngine.Random.Range(0f, 1f) < 0.5f ? true : false;
