@@ -961,10 +961,9 @@ GameObject:
   - component: {fileID: 731557936}
   - component: {fileID: 731557937}
   - component: {fileID: 731557938}
-  - component: {fileID: 731557942}
-  - component: {fileID: 731557943}
   - component: {fileID: 731557944}
   - component: {fileID: 731557945}
+  - component: {fileID: 731557946}
   m_Layer: 0
   m_Name: scriptHolder
   m_TagString: Untagged
@@ -1015,13 +1014,6 @@ MonoBehaviour:
   collectTrialSummary: 0
   collectEventSummary: 0
   hasResponded: 0
-  currentDetectionTask: 0
-  currentStimulusType: 0
-  currentTargetPresent: 0
-  currentGlobalLetter: 0
-  currentLocalLetter: 0
-  currentIsCongruent: 0
-  currentTrialCategory: 
   responseforPresentAbsent: []
   TextScreen: {fileID: 1948162547}
   TextFeedback: {fileID: 779891527}
@@ -1078,6 +1070,7 @@ MonoBehaviour:
   nPracticeBlocks: 0
   nWalkSpeeds: 0
   nstandingStilltrials: 0
+  blockDetectionTask: 
   preTrialColor: {r: 0, g: 0, b: 0, a: 0}
   probeColor: {r: 0, g: 0, b: 0, a: 0}
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -1088,22 +1081,13 @@ MonoBehaviour:
     trialType: 0
     walkSpeed: 0
     blockType: 0
-    targCorrect: 0
-    targDuration: 0
-    targOnsetTime: 0
+    isStationary: 0
     clickOnsetTime: 0
+    targCorrect: 0
     targResponse: 0
+    targDuration: 0
     targResponseTime: 0
     stairCase: 0
-    isStationary: 0
-    targPresent: 0
-    currentTask: 0
-    stimulusType: 0
-    globalLetter: 0
-    localLetter: 0
-    targetPresent: 0
-    isCongruent: 0
-    trialCategory: 
   startZone: {fileID: 1492984457}
   endZone: {fileID: 942580339}
 --- !u!114 &731557936
@@ -1186,64 +1170,6 @@ MonoBehaviour:
   rightisPressed: 0
   botharePressed: 0
   anyarePressed: 0
---- !u!114 &731557942
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 731557924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: afda74cc8a759487eb09fb6c99442a1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  staircaseType: 1
-  initialDuration: 0.6
-  minDuration: 0.01
-  maxDuration: 1
-  initialStepSize: 0.2
-  finalStepSize: 0.002
-  trialsToReduceStep: 4
-  maxTrials: 60
-  minReversals: 8
-  trialsAfterMinReversals: 10
-  currentIntensity: 1
-  currentStepSize: 0.2
-  trialCount: 0
-  reversalCount: 0
-  consecutiveCorrect: 0
-  consecutiveIncorrect: 0
-  isComplete: 0
---- !u!114 &731557943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 731557924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba18cde330c1d46b4a2276128b364f14, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  staircaseType: 1
-  initialDuration: 0.6
-  minDuration: 0.01
-  maxDuration: 1
-  initialStepSize: 0.2
-  finalStepSize: 0.002
-  trialsToReduceStep: 4
-  maxTrials: 60
-  minReversals: 8
-  trialsAfterMinReversals: 10
-  currentIntensity: 1
-  currentStepSize: 0.2
-  trialCount: 0
-  reversalCount: 0
-  consecutiveCorrect: 0
-  consecutiveIncorrect: 0
-  isComplete: 0
 --- !u!114 &731557944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1269,6 +1195,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44068bbef1d9f5b4d8db23e8eb46a4ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &731557946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 731557924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cffcbb1cad81c4a2e9bb88f08c0d8f7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staircaseType: 1
+  initialDuration: 0.6
+  minDuration: 0.01
+  maxDuration: 1
+  initialStepSize: 0.05
+  finalStepSize: 0.011
+  reversalsToReduceStep: 4
 --- !u!1 &738620140
 GameObject:
   m_ObjectHideFlags: 0
