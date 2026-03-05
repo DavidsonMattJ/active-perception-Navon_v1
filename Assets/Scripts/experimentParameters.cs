@@ -103,12 +103,14 @@ public class experimentParameters : MonoBehaviour
         public readonly bool isCongruent;              // Were global and local letters the same?
         public readonly string trialCategory;          // "Active" (target present) or "Inactive" (target absent)
         public readonly float onsetTime;               // Trial-relative time (seconds) when stimulus appeared
+        public readonly float stimulusDuration;        // Actual staircase-adjusted duration shown
 
         public StimulusEvent(
             DetectionTask detectionTask, StimulusType stimulusType,
             char globalLetter, char localLetter,
             bool targetPresent, bool isCongruent,
-            string trialCategory, float onsetTime)
+            string trialCategory, float onsetTime,
+            float stimulusDuration) // added for recorddata, logging
         {
             this.detectionTask = detectionTask;
             this.stimulusType = stimulusType;
@@ -118,6 +120,7 @@ public class experimentParameters : MonoBehaviour
             this.isCongruent = isCongruent;
             this.trialCategory = trialCategory;
             this.onsetTime = onsetTime;
+            this.stimulusDuration = stimulusDuration; // logging
         }
     }
 
@@ -214,7 +217,7 @@ public class experimentParameters : MonoBehaviour
         // also create wrapper to determine block conditions.
         // first few trials (or block) should be stationary, for burn-in.
         // this is fixed by adding an extra natural speed block at first index.
-        blockTypelist = new int[nBlocks-nPracticeBlocks]; // shuffle everything after practice.
+        blockTypelist = new int[nBlocks-nPracticeBlocks - 1]; // shuffle everything after practice.
 
         // block type determines walking speed,
         // 1 = slow walk,
@@ -229,8 +232,8 @@ public class experimentParameters : MonoBehaviour
         }
 
         // Calculate how many blocks should be of each type
-        int nSlowBlocks = Mathf.RoundToInt((nBlocks-nPracticeBlocks) * propSlowSpeed);
-        int nFastBlocks = (nBlocks-nPracticeBlocks) - nSlowBlocks;
+        int nSlowBlocks = Mathf.RoundToInt((nBlocks-nPracticeBlocks - 1) * propSlowSpeed);
+        int nFastBlocks = (nBlocks-nPracticeBlocks -1) - nSlowBlocks;
 
         // Fill the blockTypelist with proportional amounts
         int icount = 0;
@@ -253,7 +256,7 @@ public class experimentParameters : MonoBehaviour
         shuffleArray(blockTypelist);
         // now shoehorn in a natural pace block at the start of this array:
 
-        blockTypelist = new[] { 1 }.Concat(blockTypelist).ToArray();
+        blockTypelist = new[] { 2 }.Concat(blockTypelist).ToArray();
 
         blockTypeArray = new int[(int)nTrials, 3];
         // 3 columns. blockiD, trialID (within block), walkspeed

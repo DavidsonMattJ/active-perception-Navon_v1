@@ -30,7 +30,7 @@ public class targetAppearance : MonoBehaviour
 
     private Color targColor;
 
-    bool includeBackwardMask = false;
+    bool includeBackwardMask = true;
 
     private void Start()
     {
@@ -92,7 +92,17 @@ public class targetAppearance : MonoBehaviour
             //// however many targets we have to present this trial, cycle through and present
 
             for (int itargindx = 0; itargindx < trialOnsets.Length; itargindx++)
-            {
+            { 
+                bool isLastTarget = itargindx == trialOnsets.Length - 1; // is this the final stimulus?
+
+                if (itargindx == 0)
+                {
+                waitTime = trialOnsets[0];
+                }
+                else
+                {
+                waitTime = trialOnsets[itargindx] - runExperiment.trialTime;
+                }
                 // first target has no ISI adjustment
                 if (itargindx == 0)
                 {
@@ -119,6 +129,9 @@ public class targetAppearance : MonoBehaviour
                     runExperiment.detectIndex = itargindx + 1; //  click responses collected in this response window will be 'correct'
                     runExperiment.hasResponded = false;  //switched if targ detected.
                     
+                    // Use adaptive stimulus duration
+                    float currentStimulusDuration =  makeNavonStimulus.navonP.targDuration; // function call?
+                    
                     // Freeze all stimulus properties into an immutable event at this
                     // exact moment. Once created, this snapshot cannot be changed —
                     // so even when GenerateNavon() later overwrites navonP for the
@@ -132,12 +145,11 @@ public class targetAppearance : MonoBehaviour
                         targetPresent: makeNavonStimulus.navonP.targetPresent,
                         isCongruent:   makeNavonStimulus.navonP.isCongruent,
                         trialCategory: makeNavonStimulus.navonP.trialCategory,
-                        onsetTime:     runExperiment.trialTime
+                        onsetTime:     runExperiment.trialTime,
+                        stimulusDuration: currentStimulusDuration
                     );
 
-                    
-                    // Use adaptive stimulus duration
-                    float currentStimulusDuration =  makeNavonStimulus.navonP.targDuration; // function call?
+                
                     yield return new WaitForSecondsRealtime(currentStimulusDuration);
                     // BACKWARD MASK: Show mask AFTER stimulus for 30ms
                     
