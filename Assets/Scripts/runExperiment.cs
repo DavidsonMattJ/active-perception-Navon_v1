@@ -178,7 +178,7 @@ public class runExperiment : MonoBehaviour
         {
             trialTime += Time.deltaTime; // increment timer.
 
-            if (trialTime > thisTrialDuration + expParams.responseWindow + 1.5f) // +1.5 second buffer after last stimulus
+            if (trialTime > thisTrialDuration + expParams.responseWindow + 1f) // +1 second buffer after last stimulus
             {
                 trialPackDown();
                 trialCount++;
