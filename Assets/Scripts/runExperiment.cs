@@ -295,51 +295,25 @@ public class runExperiment : MonoBehaviour
 
         if (trialCount >= expParams.nstandingStilltrials)
         {
-            // float nextIntensity = makeGaborTexture.gaborP.sAmp; //default 
-            float nextDuration = makeNavonStimulus.navonP.targDuration; //default 
+            float nextDuration = makeNavonStimulus.navonP.targDuration; //default
 
-            bool wasCorrect = expParams.trialD.targCorrect == 1 ? true : false; // return true or flse based on targCorrect [1,0].
+            bool wasCorrect = expParams.trialD.targCorrect == 1 ? true : false;
 
-                // Map blockType to condition label for the staircase
             string condition = GetConditionLabel(expParams.trialD.blockType);
-
-             if (condition != null)
-            {
+            if (condition != null)
                 nextDuration = adaptiveStaircase.ProcessResponse(condition, wasCorrect);
-            }
 
-
-            Debug.Log($"[Staircase] Stimulus processed: {(wasCorrect ? "✓" : "✗")} → Next duration: {nextDuration:F3}s");
-
-            //apply new intensity (targetPresent is randomized inside GenerateNavon)
-            makeNavonStimulus.navonP.targDuration= nextDuration;
-            makeNavonStimulus.GenerateNavon(); // creates new texture
-
-            //note that this creates the texture , but not applied until ShowNavon();
-            Debug.Log("correct: " + expParams.trialD.targCorrect + ", new quest value for staircase [" + blockType + "] = " + nextDuration);
-
+            // Apply new duration; GenerateNavon() is deferred to the coroutine
+            // (runs after the response window, off the click path).
+            makeNavonStimulus.navonP.targDuration = nextDuration;
         }
-        else
+        
+
+        if (trialCount<= expParams.nFeedbackTrials)
         {
-            // just regenerate without updating contrast, provide feedback also (targetPresent is randomized inside GenerateNavon).
-            Debug.Log("Still in practice trials, regenerating... ");
-            makeNavonStimulus.GenerateNavon(); // regenerate with current duration
-            
-            if (expParams.trialD.targCorrect == 1)
-            {
-                FeedbackText.UpdateText(FeedbackText.TextType.Correct);
-                //using Unity's Invoke, hide after small duration.
-                Invoke(nameof(HideFeedbackText), 0.2f); // inovke requires name of method as a string.
-
-            }
-            else
-            {
-                FeedbackText.UpdateText(FeedbackText.TextType.Incorrect);
-                Invoke(nameof(HideFeedbackText), 0.2f); // inovke requires name of method as a string.
-            }
-            
-
-        }
+            showFeedback();
+        };
+        
                 
     }
     private void HideFeedbackText()
@@ -488,6 +462,23 @@ public class runExperiment : MonoBehaviour
         }
     }
 
+void showFeedback()
+    {
+        // Practice trial: provide feedback.
+        // GenerateNavon() is deferred to the coroutine.
+        if (expParams.trialD.targCorrect == 1)
+        {
+            FeedbackText.UpdateText(FeedbackText.TextType.Correct);
+            //using Unity's Invoke, hide after small duration.
+            Invoke(nameof(HideFeedbackText), 0.2f); // inovke requires name of method as a string.
+
+        }
+        else
+        {
+            FeedbackText.UpdateText(FeedbackText.TextType.Incorrect);
+            Invoke(nameof(HideFeedbackText), 0.2f); // inovke requires name of method as a string.
+        }
+    }
 
 
 }

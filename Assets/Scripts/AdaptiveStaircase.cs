@@ -98,8 +98,6 @@ public class AdaptiveStaircase : MonoBehaviour
         s.responseHistory.Add(correct);
         s.intensityHistory.Add(s.currentIntensity);
 
-        Debug.Log($"[Staircase:{condition}] Trial {s.trialCount}: correct={correct}, intensity={s.currentIntensity:F3}");
-
         // Update consecutive counters
         if (correct)
         {
@@ -156,8 +154,6 @@ public class AdaptiveStaircase : MonoBehaviour
 
         // Clamp
         s.currentIntensity = Mathf.Clamp(s.currentIntensity, minDuration, maxDuration);
-
-        Debug.Log($"[Staircase:{condition}] New intensity: {s.currentIntensity:F3}, reversals: {s.reversalCount}");
 
         return s.currentIntensity;
     }

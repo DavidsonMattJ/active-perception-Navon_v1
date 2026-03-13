@@ -34,7 +34,7 @@ public class experimentParameters : MonoBehaviour
     
 
     //Experiment Design parameers:
-    public int nTrialsperBlock, nBlocks, nPracticeBlocks, nWalkSpeeds, nstandingStilltrials;
+    public int nTrialsperBlock, nBlocks, nPracticeBlocks, nWalkSpeeds, nstandingStilltrials, nFeedbackTrials;
     private int[] blockTypelist;
     [HideInInspector]
     public int[,] blockTypeArray; //nTrials x 3 (block, trialID, type)
@@ -176,7 +176,7 @@ public class experimentParameters : MonoBehaviour
         responseWindow = 0.5f; // time to respond after target onset.
         targDurationsec = 0.4f; // Initial value (start easy) to be updated by staricase.
         nstandingStilltrials = 2; // ensure mod%2 to not mess with gide positioning.
-        
+        nFeedbackTrials = 10; //feedback text 'correct', 'incorrect' displayed
         jittermax = 0.25f; // in seconds, will be a uniform distribution from 0  + jittermax.
         // set colour presets
         // preTrialColor = new Color(0f, 1f, 0f, 1); //drk green
@@ -211,49 +211,20 @@ public class experimentParameters : MonoBehaviour
         // walkDurs[1] = 9f; //natural;
 
 
-        // also create wrapper to determine block conditions.
-        // first few trials (or block) should be stationary, for burn-in.
-        // this is fixed by adding an extra natural speed block at first index.
-        blockTypelist = new int[nBlocks-nPracticeBlocks]; // shuffle everything after practice.
+        // Block 0 is practice and handles its own trial-type mix in the practice loop below.
+        // Experimental blocks (iblock 1..nBlocks-1) are all pseudorandomly shuffled here.
+        // block type: 1 = slow walk, 2 = normal walk
+        int nExpBlocks  = nBlocks - nPracticeBlocks;                          // 10
+        int nSlowBlocks = Mathf.RoundToInt(nExpBlocks * propSlowSpeed);       // 5
+        int nFastBlocks = nExpBlocks - nSlowBlocks;                           // 5
 
-        // block type determines walking speed,
-        // 1 = slow walk,
-        // 2 = normal walk, 
+        blockTypelist = new int[nExpBlocks];
 
-        // FILL BLOCKS, but we want a lower proportion of slow (to accomodate) for more trials in that condition.
-
-        int[] walktypeArray = new int[nWalkSpeeds];
-        for (int i = 0; i < nWalkSpeeds; i++)
-        {
-            walktypeArray[i] = i + 1;
-        }
-
-        // Calculate how many blocks should be of each type
-        int nSlowBlocks = Mathf.RoundToInt((nBlocks-nPracticeBlocks) * propSlowSpeed);
-        int nFastBlocks = (nBlocks-nPracticeBlocks) - nSlowBlocks;
-
-        // Fill the blockTypelist with proportional amounts
         int icount = 0;
-
-        // Add slow speed blocks (type 1)
-        for (int i = 0; i < nSlowBlocks; i++)
-        {
-            blockTypelist[icount] = walktypeArray[0];
-            icount++;
-        }
-
-        // Add fast speed blocks (type 2)
-        for (int i = 0; i < nFastBlocks; i++)
-        {
-            blockTypelist[icount] = walktypeArray[1];
-            icount++;
-        }
-
+        for (int i = 0; i < nSlowBlocks; i++) { blockTypelist[icount++] = 1; }
+        for (int i = 0; i < nFastBlocks; i++) { blockTypelist[icount++] = 2; }
 
         shuffleArray(blockTypelist);
-        // now shoehorn in a natural pace block at the start of this array:
-
-        blockTypelist = new[] { 1 }.Concat(blockTypelist).ToArray();
 
         blockTypeArray = new int[(int)nTrials, 3];
         // 3 columns. blockiD, trialID (within block), walkspeed
@@ -292,7 +263,7 @@ public class experimentParameters : MonoBehaviour
             {
                 blockTypeArray[icounter, 0] = iblock;
                 blockTypeArray[icounter, 1] = itrial;
-                blockTypeArray[icounter, 2] = blockTypelist[iblock - nPracticeBlocks]; //mvmnt (randomized).
+                blockTypeArray[icounter, 2] = blockTypelist[iblock - nPracticeBlocks]; // index 0..nExpBlocks-1
 
                 icounter++;
             }
@@ -308,7 +279,6 @@ public class experimentParameters : MonoBehaviour
             blockDetectionTask[i] = DetectionTask.DetectE;
         }
 
-        int nExpBlocks = nBlocks - nPracticeBlocks;
         int nDetectE = nExpBlocks / 2;
         int nDetectT = nExpBlocks - nDetectE;
 

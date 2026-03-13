@@ -144,7 +144,7 @@ public class targetAppearance : MonoBehaviour
                     if (includeBackwardMask)
                     {
                         makeNavonStimulus.backwardMask();  // Shows the hash grid
-                        yield return new WaitForSecondsRealtime(0.03f);  // 30ms mask     
+                        yield return new WaitForSecondsRealtime(0.03f);  // 30ms mask
                         makeNavonStimulus.hideNavon();
                         runExperiment.targState = 0; // target has been removed
                         //adjust resposne window
@@ -155,9 +155,15 @@ public class targetAppearance : MonoBehaviour
                        runExperiment.targState = 0; // target has been removed
                         yield return new WaitForSecondsRealtime(expParams.responseWindow);
                     }
-                    
+
+                    // Generate the next texture now, after the response window.
+                    // processPlayerResponse() has already updated navonP.targDuration via
+                    // the staircase — so this texture reflects the new difficulty.
+                    // Running here keeps GenerateNavon() off the button-click path.
+                    makeNavonStimulus.GenerateNavon();
+
                     // if no click in time, count as a miss.
-                    if (!runExperiment.hasResponded) // no response 
+                    if (!runExperiment.hasResponded) // no response
                     {
                         processNoResponse = true; // handled in runExperiment.
                     }

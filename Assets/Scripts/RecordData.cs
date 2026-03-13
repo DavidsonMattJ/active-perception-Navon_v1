@@ -17,7 +17,7 @@ public class RecordData : MonoBehaviour
     // updated 2025-05 MD to enable gaze origin and direction recordings.
     // preallocate output file, and folder
     public string outputFile_pos, outputFile_posEye, outputFile_summary, outputFolder;
-    List<string> outputData_pos = new List<string>();
+    private StreamWriter posWriter;
     List<string> outputData_summary = new List<string>();
     public string startTime;
     float data_trialTime;
@@ -144,6 +144,8 @@ public class RecordData : MonoBehaviour
             "\r\n";
 
         File.WriteAllText(outputFile_pos, columnNamesPos);
+        posWriter = new StreamWriter(outputFile_pos, append: true);
+        posWriter.AutoFlush = false;
 
     }
 
@@ -217,7 +219,7 @@ public class RecordData : MonoBehaviour
                 // pupilDiameter; // average of left and right.
 
 
-        outputData_pos.Add(data);
+        posWriter.WriteLine(data);
 
 
     }
@@ -340,11 +342,10 @@ public class RecordData : MonoBehaviour
 
     public void saveonBlockEnd()
     {
-        saveRecordedDataList(outputFile_pos, outputData_pos);
+        posWriter?.Flush();
         saveRecordedDataList(outputFile_summary, outputData_summary);
 
         // clear cache
-        outputData_pos = new List<string>();
         outputData_summary = new List<string>();
 
 
@@ -357,35 +358,25 @@ public class RecordData : MonoBehaviour
 
     public void writeFiletoDisk()
     {
+        // pos data is written per-frame via posWriter; flush OS buffer now
         if (runExperiment.playinVR)
-        { // both
-            saveRecordedDataList(outputFile_pos, outputData_pos);
-            saveRecordedDataList(outputFile_summary, outputData_summary);
-        }
-        else
-        {
-            saveRecordedDataList(outputFile_summary, outputData_summary);
-        }
+            posWriter?.Flush();
 
-        // clear cache
-        outputData_pos = new List<string>();
+        saveRecordedDataList(outputFile_summary, outputData_summary);
         outputData_summary = new List<string>();
 
-
-
+        // stop Update() from calling this every frame
+        recordPhase = phase.idle;
     }
 
     private void OnApplicationQuit() // for safety.
     {
         if (runExperiment.playinVR)
-        { // both
-            saveRecordedDataList(outputFile_pos, outputData_pos);
-            saveRecordedDataList(outputFile_summary, outputData_summary);
-        }
-        else
         {
-            saveRecordedDataList(outputFile_summary, outputData_summary);
+            posWriter?.Flush();
+            posWriter?.Dispose();
         }
+        saveRecordedDataList(outputFile_summary, outputData_summary);
     }
 
     static void saveRecordedDataList(string filePath, List<string> dataList)

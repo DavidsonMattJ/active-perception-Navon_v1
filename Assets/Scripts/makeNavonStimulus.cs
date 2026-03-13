@@ -15,6 +15,25 @@ public class makeNavonStimulus : MonoBehaviour
     Renderer rend;
 
     Texture2D currentTexture, nextTexture, maskTexture, fixationTexture;
+    private Color[] pixelBuffer;
+    private Texture2D[] preGenTextures;
+
+    // (globalLetter, localLetter) for each StimulusType enum value (indices 0-11)
+    private static readonly (char, char)[] typeLetters =
+    {
+        ('E', 'E'), // 0  E_BigE_LittleE
+        ('E', 'I'), // 1  E_BigE_LittleI
+        ('I', 'E'), // 2  E_BigI_LittleE
+        ('F', 'F'), // 3  E_BigF_LittleF
+        ('T', 'F'), // 4  E_BigT_LittleF
+        ('F', 'T'), // 5  E_BigF_LittleT
+        ('T', 'T'), // 6  T_BigT_LittleT
+        ('T', 'E'), // 7  T_BigT_LittleE
+        ('E', 'T'), // 8  T_BigE_LittleT
+        ('F', 'F'), // 9  T_BigF_LittleF  (same pixels as type 3, different task context)
+        ('I', 'F'), // 10 T_BigI_LittleF
+        ('F', 'I'), // 11 T_BigF_LittleI
+    };
     experimentParameters experimentParameters;
     public struct NavonParams
     {
@@ -105,18 +124,15 @@ public class makeNavonStimulus : MonoBehaviour
         navonP.trialCategory = "Active";
         navonP.targDuration =experimentParameters.targDurationsec;
 
+        pixelBuffer = new Color[width * height];
+        System.Array.Fill(pixelBuffer, Color.white);
         currentTexture = new Texture2D(width, height);
-        for (int ix = 0; ix < width; ix++)
-        {
-            for (int iy = 0; iy < height; iy++)
-            {
-                currentTexture.SetPixel(ix, iy, Color.white);
-            }
-        }
+        currentTexture.SetPixels(pixelBuffer);
         currentTexture.Apply();
 
         fixationTexture = GenerateFixationCross();
-        nextTexture = GenerateNavon();
+        PreGenerateAllTextures();
+        nextTexture = GenerateNavon(); // fast lookup after pre-generation
         showNavon();
         maskTexture = GenerateMask();
         
@@ -141,114 +157,80 @@ public class makeNavonStimulus : MonoBehaviour
 
     public Texture2D GenerateNavon()
     {
-        Debug.Log($"=== GenerateNavon CALLED - Task: Detect {navonP.currentTask} ===");
-        
-        nextTexture = new Texture2D(width, height);
-
-        // ALWAYS CENTERED
-        navonP.px = 0.5f;
-        navonP.py = 0.5f;
-
-        // Generate stimulus based on current detection task
+        // Randomly select a stimulus type and set all navonP fields.
+        // Then look up the pre-generated texture — no pixel work at all.
         if (navonP.currentTask == experimentParameters.DetectionTask.DetectE)
-        {
             GenerateStimulusForE();
-        }
-        else  // DetectT
-        {
+        else
             GenerateStimulusForT();
+
+        nextTexture = preGenTextures[(int)navonP.stimulusType];
+        return nextTexture;
+    }
+
+    private void PreGenerateAllTextures()
+    {
+        preGenTextures = new Texture2D[12];
+        for (int i = 0; i < preGenTextures.Length; i++)
+        {
+            (char g, char l) = typeLetters[i];
+            preGenTextures[i] = CreateNavonTexture(g, l);
         }
+        Debug.Log("Pre-generated 12 Navon textures.");
+    }
 
-        int[,] globalPattern = GetLetterPattern(navonP.globalLetter);
-        int[,] localPattern = GetLetterPattern(navonP.localLetter);
+    // Generates the pixel content for a single (globalLetter, localLetter) combination.
+    // Called once per stimulus type at startup; result is cached in preGenTextures[].
+    // White background is explicit because new Texture2D() initialises to transparent black.
+    private Texture2D CreateNavonTexture(char globalLetter, char localLetter)
+    {
+        int[,] globalPattern = GetLetterPattern(globalLetter);
+        int[,] localPattern  = GetLetterPattern(localLetter);
 
-        // Calculate center position (ALWAYS CENTERED)
-        float cx = navonP.px * width;
-        float cy = navonP.py * height;
+        const int globalLetterSize    = 400;
+        const int localLetterSize     = 50;
+        const int spacing             = 10;
+        const int effectiveGlobalSize = globalLetterSize + spacing * 2; // 420
 
-        // FIXED SIZES
-        int globalLetterSize = 400;
-        int localLetterSize = 50;
-        int spacing = 10;
+        float startX = width  / 2f - effectiveGlobalSize / 2f;
+        float startY = height / 2f - effectiveGlobalSize / 2f;
+        float cellW  = effectiveGlobalSize / 7f;
+        float cellH  = effectiveGlobalSize / 7f;
 
-        // Calculate effective size including spacing
-        int effectiveGlobalSize = globalLetterSize + (spacing * 2);
-        
-        // Calculate starting position
-        float startX = cx - (effectiveGlobalSize / 2f);
-        float startY = cy - (effectiveGlobalSize / 2f);
+        System.Array.Fill(pixelBuffer, Color.white);
+        DrawFixationCross(pixelBuffer);
 
-        // Random offset for noise
-        offsetX = Random.Range(100f, 200f);
-        offsetY = Random.Range(100f, 200f);
-
-        // White background
         for (int ix = 0; ix < width; ix++)
         {
             for (int iy = 0; iy < height; iy++)
             {
-                nextTexture.SetPixel(ix, iy, Color.white);
-            }
-        }
-
-        // Draw fixation cross
-        DrawFixationCross(nextTexture);
-
-        // Create the stimulus
-        for (int ix = 0; ix < width; ix++)
-        {
-            for (int iy = 0; iy < height; iy++)
-            {
-                float pixelValue = 1.0f;
-
-                float cellWidth = effectiveGlobalSize / 7f;
-                float cellHeight = effectiveGlobalSize / 7f;
-                
-                int globalRow = (int)((iy - startY) / cellHeight);
-                int globalCol = (int)((ix - startX) / cellWidth);
+                int globalRow = (int)((iy - startY) / cellH);
+                int globalCol = (int)((ix - startX) / cellW);
 
                 if (globalRow >= 0 && globalRow < 7 && globalCol >= 0 && globalCol < 7)
                 {
-                    int flippedRow = 6 - globalRow;
-                    
-                    if (globalPattern[flippedRow, globalCol] == 1)
+                    if (globalPattern[6 - globalRow, globalCol] == 1)
                     {
-                        float cellStartX = startX + globalCol * (effectiveGlobalSize / 7f);
-                        float cellStartY = startY + globalRow * (effectiveGlobalSize / 7f);
-                        
-                        cellStartX += spacing / 2f;
-                        cellStartY += spacing / 2f;
-                        
+                        float cellStartX = startX + globalCol * cellW + spacing / 2f;
+                        float cellStartY = startY + globalRow * cellH + spacing / 2f;
+
                         int localRow = (int)((iy - cellStartY) / (localLetterSize / 7f));
                         int localCol = (int)((ix - cellStartX) / (localLetterSize / 7f));
 
                         if (localRow >= 0 && localRow < 7 && localCol >= 0 && localCol < 7)
                         {
-                            int flippedLocalRow = 6 - localRow;
-                            
-                            if (localPattern[flippedLocalRow, localCol] == 1)
-                            {
-                                pixelValue = 0.0f;
-                            }
+                            if (localPattern[6 - localRow, localCol] == 1)
+                                pixelBuffer[ix + iy * width] = Color.black;
                         }
                     }
-                }
-
-                if (pixelValue < 0.99f)
-                {
-                    Color color = new Color(pixelValue, pixelValue, pixelValue);
-                    nextTexture.SetPixel(ix, iy, color);
                 }
             }
         }
 
-        nextTexture.Apply();
-        
-        string presenceText = navonP.targetPresent ? "TARGET PRESENT" : "TARGET ABSENT";
-        Debug.Log($"TEXTURE GENERATED: {navonP.trialCategory} - {presenceText} ({navonP.stimulusType})");
-        Debug.Log($"  Global: {navonP.globalLetter}, Local: {navonP.localLetter}, Congruent: {navonP.isCongruent}");
-        
-        return nextTexture;
+        Texture2D tex = new Texture2D(width, height);
+        tex.SetPixels(pixelBuffer);
+        tex.Apply();
+        return tex;
     }
 
     private void GenerateStimulusForE()
@@ -402,21 +384,14 @@ public class makeNavonStimulus : MonoBehaviour
     Texture2D GenerateFixationCross()
     {
         fixationTexture = new Texture2D(width, height);
-
-        for (int ix = 0; ix < width; ix++)
-        {
-            for (int iy = 0; iy < height; iy++)
-            {
-                fixationTexture.SetPixel(ix, iy, Color.white);
-            }
-        }
-
-        DrawFixationCross(fixationTexture);
+        System.Array.Fill(pixelBuffer, Color.white);
+        DrawFixationCross(pixelBuffer);
+        fixationTexture.SetPixels(pixelBuffer);
         fixationTexture.Apply();
         return fixationTexture;
     }
 
-    void DrawFixationCross(Texture2D texture)
+    void DrawFixationCross(Color[] pixels)
     {
         int centerX = width / 2;
         int centerY = height / 2;
@@ -428,10 +403,9 @@ public class makeNavonStimulus : MonoBehaviour
         {
             for (int t = 0; t < crossThickness; t++)
             {
-                if (x >= 0 && x < width && centerY + t >= 0 && centerY + t < height)
-                {
-                    texture.SetPixel(x, centerY + t - crossThickness / 2, Color.black);
-                }
+                int py = centerY + t - crossThickness / 2;
+                if (x >= 0 && x < width && py >= 0 && py < height)
+                    pixels[x + py * width] = Color.black;
             }
         }
 
@@ -440,10 +414,9 @@ public class makeNavonStimulus : MonoBehaviour
         {
             for (int t = 0; t < crossThickness; t++)
             {
-                if (centerX + t >= 0 && centerX + t < width && y >= 0 && y < height)
-                {
-                    texture.SetPixel(centerX + t - crossThickness / 2, y, Color.black);
-                }
+                int px = centerX + t - crossThickness / 2;
+                if (px >= 0 && px < width && y >= 0 && y < height)
+                    pixels[px + y * width] = Color.black;
             }
         }
     }
