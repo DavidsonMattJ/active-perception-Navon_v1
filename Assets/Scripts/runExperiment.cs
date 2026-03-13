@@ -306,6 +306,12 @@ public class runExperiment : MonoBehaviour
             // Apply new duration; GenerateNavon() is deferred to the coroutine
             // (runs after the response window, off the click path).
             makeNavonStimulus.navonP.targDuration = nextDuration;
+        } else
+        {
+            // just regenerate without updating contrast, provide feedback also.
+            Debug.Log("Still in practice trials, regenerating... ");
+             makeNavonStimulus.GenerateNavon(); // using the current intensity, but new randomisation of target present/absent and letter identity.
+            
         }
         
 

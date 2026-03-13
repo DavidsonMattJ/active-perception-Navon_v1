@@ -215,21 +215,23 @@ public class experimentParameters : MonoBehaviour
 
 
         // Block 0 is practice and handles its own trial-type mix in the practice loop below.
-        // Experimental blocks (iblock 1..nBlocks-1) are all pseudorandomly shuffled here.
-        // block type: 1 = slow walk, 2 = normal walk
-        int nExpBlocks  = nBlocks - nPracticeBlocks;                          // 10
-        int nSlowBlocks = Mathf.RoundToInt(nExpBlocks * propSlowSpeed);       // 5
-        int nFastBlocks = nExpBlocks - nSlowBlocks;                           // 5
+        // Experimental blocks (iblock 1..nBlocks-1): block 1 is always natural pace;
+        // blocks 2..nBlocks-1 are pseudorandomly shuffled. block type: 1 = slow walk, 2 = normal walk
+        int nExpBlocks      = nBlocks - nPracticeBlocks;                           // 10
+        const int nForcedFastBlocks = 1;                                           // block 1 always natural pace
+        int nShuffledBlocks = nExpBlocks - nForcedFastBlocks;                      // 9
+        int nSlowBlocks     = Mathf.RoundToInt(nExpBlocks * propSlowSpeed);        // 5 (target total)
+        int nFastBlocks     = nExpBlocks - nSlowBlocks - nForcedFastBlocks;        // 4 (shuffled fast)
 
-        blockTypelist = new int[nExpBlocks];
+        blockTypelist = new int[nShuffledBlocks]; // 9 entries (5 slow + 4 fast)
 
         int icount = 0;
-        for (int i = 0; i < nSlowBlocks; i++) { blockTypelist[icount++] = 1; }
-        for (int i = 0; i < nFastBlocks; i++) { blockTypelist[icount++] = 2; }
+        for (int i = 0; i < nSlowBlocks;  i++) { blockTypelist[icount++] = 1; }
+        for (int i = 0; i < nFastBlocks;  i++) { blockTypelist[icount++] = 2; }
 
         shuffleArray(blockTypelist);
-        // now shoehorn in a natural pace block at the start of this array:
-
+        // Prepend 1 forced natural-pace block → 10 entries total, all accessed by the loop below.
+        // Total balance: 5 slow + 5 fast (1 forced + 4 shuffled fast).
         blockTypelist = new[] { 2 }.Concat(blockTypelist).ToArray();
 
         blockTypeArray = new int[(int)nTrials, 3];
