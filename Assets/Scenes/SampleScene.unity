@@ -3058,6 +3058,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offsetX: 0
   offsetY: 0
+  forceTargetPresent: 0
   scriptHolder: {fileID: 731557924}
 --- !u!1 &1948162547
 GameObject:

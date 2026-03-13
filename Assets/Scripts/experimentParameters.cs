@@ -103,12 +103,14 @@ public class experimentParameters : MonoBehaviour
         public readonly bool isCongruent;              // Were global and local letters the same?
         public readonly string trialCategory;          // "Active" (target present) or "Inactive" (target absent)
         public readonly float onsetTime;               // Trial-relative time (seconds) when stimulus appeared
+        public readonly float stimulusDuration;        // Actual staircase-adjusted duration shown
 
         public StimulusEvent(
             DetectionTask detectionTask, StimulusType stimulusType,
             char globalLetter, char localLetter,
             bool targetPresent, bool isCongruent,
-            string trialCategory, float onsetTime)
+            string trialCategory, float onsetTime,
+            float stimulusDuration) // added for recorddata, logging
         {
             this.detectionTask = detectionTask;
             this.stimulusType = stimulusType;
@@ -118,6 +120,7 @@ public class experimentParameters : MonoBehaviour
             this.isCongruent = isCongruent;
             this.trialCategory = trialCategory;
             this.onsetTime = onsetTime;
+            this.stimulusDuration = stimulusDuration; // logging
         }
     }
 
@@ -225,6 +228,9 @@ public class experimentParameters : MonoBehaviour
         for (int i = 0; i < nFastBlocks; i++) { blockTypelist[icount++] = 2; }
 
         shuffleArray(blockTypelist);
+        // now shoehorn in a natural pace block at the start of this array:
+
+        blockTypelist = new[] { 2 }.Concat(blockTypelist).ToArray();
 
         blockTypeArray = new int[(int)nTrials, 3];
         // 3 columns. blockiD, trialID (within block), walkspeed

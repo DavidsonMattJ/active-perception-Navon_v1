@@ -180,7 +180,7 @@ public class runExperiment : MonoBehaviour
 
             if (trialTime > thisTrialDuration)
             {
-                trialPackDown(); // includes trial incrementer
+                trialPackDown();
                 trialCount++;
             }
 
@@ -362,9 +362,17 @@ public class runExperiment : MonoBehaviour
         expParams.trialD.isStationary = isStationary;
         expParams.trialD.blockType = blockType; // 0,1,2
 
+        makeNavonStimulus.forceTargetPresent = trialCount < expParams.nstandingStilltrials;
+
         // Set detection task from balanced block assignment
         int currentBlockID = expParams.blockTypeArray[trialCount, 0];
         var newTask = expParams.blockDetectionTask[currentBlockID];
+
+        // force DetectE for standing still practice trials
+        if (trialCount < expParams.nstandingStilltrials)
+        {
+            newTask = experimentParameters.DetectionTask.DetectE;
+        }
 
         // Regenerate stimulus if the task changed (new block with different target letter)
         if (makeNavonStimulus.navonP.currentTask != newTask)
@@ -388,7 +396,6 @@ public class runExperiment : MonoBehaviour
 
         //start coroutine to control target onset and target behaviour:
         print("Starting Trial " + (trialCount + 1) + " of " + expParams.nTrialsperBlock);
-
         targetAppearance.startSequence(); // co routine in another script.
 
     }

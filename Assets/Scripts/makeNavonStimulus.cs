@@ -49,6 +49,9 @@ public class makeNavonStimulus : MonoBehaviour
     }
 
     public NavonParams navonP;
+    public bool forceTargetPresent = false; // forces target present during standing still practice trials
+
+    
 
     // Letter patterns for all 4 letters: E, T, F, I
     private int[,] letterE = new int[,] {
@@ -236,7 +239,7 @@ public class makeNavonStimulus : MonoBehaviour
     private void GenerateStimulusForE()
     {
         // 50% chance of active vs inactive
-        bool showActive = Random.Range(0f, 1f) < 0.5f;
+        bool showActive = forceTargetPresent ? true : Random.Range(0f, 1f) < 0.5f;
         
         if (showActive)
         {
@@ -303,7 +306,7 @@ public class makeNavonStimulus : MonoBehaviour
     private void GenerateStimulusForT()
     {
         // 50% chance of active vs inactive
-        bool showActive = Random.Range(0f, 1f) < 0.5f;
+        bool showActive = forceTargetPresent ? true : Random.Range(0f, 1f) < 0.5f;
         
         if (showActive)
         {

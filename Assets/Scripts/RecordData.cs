@@ -306,7 +306,7 @@ public class RecordData : MonoBehaviour
                   evt.targetPresent + "," +                         // stimulus data
                   evt.isCongruent + "," +                           // stimulus data
                   evt.trialCategory + "," +                         // stimulus data
-                  experimentParameters.targDurationsec + "," +      // session parameter
+                  evt.stimulusDuration + "," +                      // session parameter
                   evt.onsetTime + "," +                             // stimulus data
                   experimentParameters.trialD.clickOnsetTime + "," +// response data (from trialD)
                   reactionTime + "," +
