@@ -154,8 +154,8 @@ public class makeNavonStimulus : MonoBehaviour
 
     public void backwardMask()
     {
+        // maskTexture is pre-generated once at Start() — reuse directly.
         rend.material.mainTexture = maskTexture;
-        maskTexture = GenerateMask();
     }
 
     public Texture2D GenerateNavon()
@@ -426,106 +426,71 @@ public class makeNavonStimulus : MonoBehaviour
 
     Texture2D GenerateMask()
     {
-        maskTexture = new Texture2D(width, height);
+        // White background via buffer (same approach as Navon textures).
+        System.Array.Fill(pixelBuffer, Color.white);
 
-        // White background
-        for (int ix = 0; ix < width; ix++)
-        {
-            for (int iy = 0; iy < height; iy++)
-            {
-                maskTexture.SetPixel(ix, iy, Color.white);
-            }
-        }
+        // 7x7 grid of hash marks - slightly bigger than the stimulus
+        const int gridSize = 7;
+        const int hashSize = 55; // slightly bigger than the 50px local letters
+        const int spacing  = 12;
 
-        // Create 7x7 grid of hash marks - SLIGHTLY BIGGER THAN STIMULUS
-        int gridSize = 7;  // 7x7 grid
-        int hashSize = 55; // Slightly bigger hash marks (was 50)
-        int spacing = 12;  // Slightly more spacing (was 10)
-        
-        // Total grid: 7 × (55 + 12) - 12 = 457 pixels (covers 400px stimulus nicely)
-        int totalGridWidth = (hashSize + spacing) * gridSize - spacing;
+        // Total grid: 7 × (55 + 12) - 12 = 457 pixels (covers 400px stimulus)
+        int totalGridWidth  = (hashSize + spacing) * gridSize - spacing;
         int totalGridHeight = (hashSize + spacing) * gridSize - spacing;
-        
-        // Center the grid
-        int startX = (width - totalGridWidth) / 2;
+
+        int startX = (width  - totalGridWidth)  / 2;
         int startY = (height - totalGridHeight) / 2;
 
-        // Draw each hash mark in the grid
         for (int gridRow = 0; gridRow < gridSize; gridRow++)
         {
             for (int gridCol = 0; gridCol < gridSize; gridCol++)
             {
                 int hashStartX = startX + gridCol * (hashSize + spacing);
                 int hashStartY = startY + gridRow * (hashSize + spacing);
-                
-                DrawHashMark(maskTexture, hashStartX, hashStartY, hashSize);
+                DrawHashMark(pixelBuffer, hashStartX, hashStartY, hashSize);
             }
         }
 
+        maskTexture = new Texture2D(width, height);
+        maskTexture.SetPixels(pixelBuffer);
         maskTexture.Apply();
         return maskTexture;
     }
 
-    void DrawHashMark(Texture2D texture, int startX, int startY, int size)
+    void DrawHashMark(Color[] pixels, int startX, int startY, int size)
     {
-        // Draw solid hash mark with continuous lines - THICKER VERSION
-        int lineThickness = 5;  // 5 pixels thick for better visibility
-        
-        // Calculate positions for the hash mark
-        int verticalBar1 = size / 3;      // Left vertical bar position
-        int verticalBar2 = (size * 2) / 3; // Right vertical bar position
-        int horizontalBar1 = size / 3;     // Top horizontal bar position
-        int horizontalBar2 = (size * 2) / 3; // Bottom horizontal bar position
-        
-        // Draw two VERTICAL bars (solid lines)
+        const int lineThickness = 5; // 5 pixels thick for better visibility
+
+        int verticalBar1   = size / 3;
+        int verticalBar2   = (size * 2) / 3;
+        int horizontalBar1 = size / 3;
+        int horizontalBar2 = (size * 2) / 3;
+
+        // Two vertical bars
         for (int y = 0; y < size; y++)
         {
-            // Left vertical bar
-            for (int thickness = 0; thickness < lineThickness; thickness++)
+            int py = startY + y;
+            if (py < 0 || py >= height) continue;
+            for (int t = 0; t < lineThickness; t++)
             {
-                int pixelX = startX + verticalBar1 + thickness;
-                int pixelY = startY + y;
-                if (pixelX >= 0 && pixelX < width && pixelY >= 0 && pixelY < height)
-                {
-                    texture.SetPixel(pixelX, pixelY, Color.black);
-                }
-            }
-            
-            // Right vertical bar
-            for (int thickness = 0; thickness < lineThickness; thickness++)
-            {
-                int pixelX = startX + verticalBar2 + thickness;
-                int pixelY = startY + y;
-                if (pixelX >= 0 && pixelX < width && pixelY >= 0 && pixelY < height)
-                {
-                    texture.SetPixel(pixelX, pixelY, Color.black);
-                }
+                int px1 = startX + verticalBar1 + t;
+                if (px1 >= 0 && px1 < width) pixels[px1 + py * width] = Color.black;
+                int px2 = startX + verticalBar2 + t;
+                if (px2 >= 0 && px2 < width) pixels[px2 + py * width] = Color.black;
             }
         }
-        
-        // Draw two HORIZONTAL bars (solid lines)
+
+        // Two horizontal bars
         for (int x = 0; x < size; x++)
         {
-            // Top horizontal bar
-            for (int thickness = 0; thickness < lineThickness; thickness++)
+            int px = startX + x;
+            if (px < 0 || px >= width) continue;
+            for (int t = 0; t < lineThickness; t++)
             {
-                int pixelX = startX + x;
-                int pixelY = startY + horizontalBar1 + thickness;
-                if (pixelX >= 0 && pixelX < width && pixelY >= 0 && pixelY < height)
-                {
-                    texture.SetPixel(pixelX, pixelY, Color.black);
-                }
-            }
-            
-            // Bottom horizontal bar
-            for (int thickness = 0; thickness < lineThickness; thickness++)
-            {
-                int pixelX = startX + x;
-                int pixelY = startY + horizontalBar2 + thickness;
-                if (pixelX >= 0 && pixelX < width && pixelY >= 0 && pixelY < height)
-                {
-                    texture.SetPixel(pixelX, pixelY, Color.black);
-                }
+                int py1 = startY + horizontalBar1 + t;
+                if (py1 >= 0 && py1 < height) pixels[px + py1 * width] = Color.black;
+                int py2 = startY + horizontalBar2 + t;
+                if (py2 >= 0 && py2 < height) pixels[px + py2 * width] = Color.black;
             }
         }
     }
