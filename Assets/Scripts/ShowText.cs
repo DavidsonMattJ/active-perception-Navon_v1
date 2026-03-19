@@ -9,11 +9,11 @@ public class ShowText : MonoBehaviour
     // this  script receives calls from other scipts (e.g. RunExperiment) and updats/removes the text from Canvas accordingly.
 
 
-   public enum TextType
+    public enum TextType
     {
         Hide = 0,
         Welcome = 1,
-        CalibrationComplete=2,        
+        CalibrationComplete = 2,
         TrialStart = 3,
         ExperimentComplete = 4,
         StandingInstructions = 5,
@@ -31,10 +31,10 @@ public class ShowText : MonoBehaviour
     runExperiment runExperiment;
     controlWalkingGuide controlWalkingGuide;
     makeNavonStimulus makeNavonStimulus;
-    
+
     [SerializeField]
     GameObject TextBG; //assign in inspector
-    public bool isInitialized= false;
+    public bool isInitialized = false;
     void Start()
     {
         textMesh = GetComponent<TextMeshProUGUI>();
@@ -57,8 +57,15 @@ public class ShowText : MonoBehaviour
 
 
         };
-        isInitialized=true; // mark as ready
+        isInitialized = true; // mark as ready
 
+    }
+
+    //  E = red, T = green
+    private string GetColoredTargetLetter()
+    {
+        bool isE = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE;
+        return isE ? "<color=red>E</color>" : "<color=green>T</color>";
     }
 
     public void UpdateText(TextType textType) // called at trialPackdown (.:. trial number is off by 1)
@@ -111,34 +118,31 @@ public class ShowText : MonoBehaviour
                     nextTrialNum = expParams.trialD.trialID + 2; // starts at zero, but new trial next trial (+1)
                     nextBlockNum = expParams.trialD.blockID + 1; // starts at zero, but same block next trial.
                 }
-                // Determine the target letter for the next trial
-                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
 
                 // this one needs to be updated with the current trial and block info. +2 since Unity starts index at 0 (+1), and we are preparing the next trial (+1).//
                 textMesh.text = "Next trial, you will be " + speedText + "." + "\n\n" + " Pull both triggers to begin Trial " + (nextTrialNum) + " / " + expParams.nTrialsperBlock + "\n\n" +
                 "(Block " + (nextBlockNum) + " of " + expParams.nBlocks + "). \n\n" +
-                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "You are searching for \"" + GetColoredTargetLetter() + "\"\n\n" +
                 "Remember: \n\n " + runExperiment.responseMapping;
-                    
+
                 TextBG.SetActive(true); //show background to enhance text.
             }
             else if (textType == TextType.CalibrationComplete)
             {
-                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
                 textMesh.text = "Well done! \n  Let's now practice the main task standing still. \n " +
                 "Listen to instructions, then pull  <both triggers> to begin a practice trial \n\n" +
-                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "You are searching for \"" + GetColoredTargetLetter() + "\"\n\n" +
                 "Remember: \n\n " + runExperiment.responseMapping;
                 TextBG.SetActive(true);
             }
             else if (textType == TextType.Welcome) // update dynamically with response mapping
             {
-                string targetLetter = makeNavonStimulus.navonP.currentTask == experimentParameters.DetectionTask.DetectE ? "E" : "T";
                 textMesh.text = "Welcome! \n Please listen to your experimenter for instructions. \n\n" +
-                "You are searching for \"" + targetLetter + "\"\n\n" +
+                "You are searching for \"" + GetColoredTargetLetter() + "\"\n\n" +
                 "Remember: \n\n " + runExperiment.responseMapping;
                 TextBG.SetActive(true); //show background to enhance text.
-            } else
+            }
+            else
             {
                 textMesh.text = textStrings[textType];
                 if (textType == TextType.Hide)
@@ -147,11 +151,11 @@ public class ShowText : MonoBehaviour
                 }
                 else
                 {
-                     TextBG.SetActive(true); //show background to enhance text.
+                    TextBG.SetActive(true); //show background to enhance text.
                 }
-                
+
             }
-            
+
         }
         else
         {
