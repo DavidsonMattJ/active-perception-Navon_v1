@@ -370,11 +370,15 @@ public class runExperiment : MonoBehaviour
 
         makeNavonStimulus.forceTargetPresent = trialCount < expParams.nstandingStilltrials;
 
-        // Set detection task from balanced block assignment
-        int currentBlockID = expParams.blockTypeArray[trialCount, 0];
-        var newTask = expParams.blockDetectionTask[currentBlockID];
+        // Set detection task from sub-block assignment.
+        // Each block is split into two equal halves; the task is looked up by
+        // which half the current trial falls in (sub-block 0 or 1).
+        int currentBlockID  = expParams.blockTypeArray[trialCount, 0];
+        int trialInBlock    = expParams.blockTypeArray[trialCount, 1];
+        int subBlock        = trialInBlock < expParams.nTrialsperBlock / 2 ? 0 : 1;
+        var newTask = expParams.blockDetectionTask[currentBlockID, subBlock];
 
-        // force DetectE for standing still practice trials
+        // Force DetectE for the standing-still practice trials.
         if (trialCount < expParams.nstandingStilltrials)
         {
             newTask = experimentParameters.DetectionTask.DetectE;

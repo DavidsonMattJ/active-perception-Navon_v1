@@ -40,7 +40,11 @@ public class experimentParameters : MonoBehaviour
     public int[,] blockTypeArray; //nTrials x 3 (block, trialID, type)
     private float propSlowSpeed, propNaturalSpeed;
     [HideInInspector]
-    public DetectionTask[] blockDetectionTask; // maps blockID → DetectE or DetectT (balanced, shuffled)
+    public DetectionTask[,] blockDetectionTask; // [blockID, subBlock] → DetectE or DetectT
+                                                // subBlock 0 = trials 0..(nTrialsperBlock/2 - 1)
+                                                // subBlock 1 = trials (nTrialsperBlock/2)..(nTrialsperBlock - 1)
+                                                // Every block contains exactly one DetectE and one DetectT sub-block;
+                                                // only the order (which half comes first) is randomised.
     //reference to walkCalibrator to get speeds:
     WalkSpeedCalibrator walkCalibrator;
     makeNavonStimulus makeNavonStimulus;
@@ -191,11 +195,11 @@ public class experimentParameters : MonoBehaviour
         
         //
         nTrialsperBlock = 20; // 
-        nBlocks = 11; //total. (experiment same duration since now more 'natural pace' blocks)
-        nPracticeBlocks = 1; // overrides the first block with some additional controls.
+        nBlocks = 11; //total. 
+        nPracticeBlocks = 1; // overrides the first block with some additional stationary trials/feedback etc.
                              //
         propSlowSpeed = 0.5f; // proption slow speed. (blocks) (reduced to account for more targs in slow blocks)
-        propNaturalSpeed = 1 - propSlowSpeed; // proportion natural speed
+        propNaturalSpeed = 1 - propSlowSpeed; // proportion natural speed for the remainder (after practice block)
 
         createTrialTypes();
 
@@ -218,20 +222,21 @@ public class experimentParameters : MonoBehaviour
         // Experimental blocks (iblock 1..nBlocks-1): block 1 is always natural pace;
         // blocks 2..nBlocks-1 are pseudorandomly shuffled. block type: 1 = slow walk, 2 = normal walk
         int nExpBlocks      = nBlocks - nPracticeBlocks;                           // 10
-        const int nForcedFastBlocks = 1;                                           // block 1 always natural pace
-        int nShuffledBlocks = nExpBlocks - nForcedFastBlocks;                      // 9
+        const int nForcedFastBlocks = 1;                                           // block 1 always a mix of natural and slow pace
+        int nShuffledBlocks = nExpBlocks ;                                         // 10
         int nSlowBlocks     = Mathf.RoundToInt(nExpBlocks * propSlowSpeed);        // 5 (target total)
-        int nFastBlocks     = nExpBlocks - nSlowBlocks - nForcedFastBlocks;        // 4 (shuffled fast)
+        int nFastBlocks     = nExpBlocks - nSlowBlocks;                            // 5 
 
-        blockTypelist = new int[nShuffledBlocks]; // 9 entries (5 slow + 4 fast)
+        blockTypelist = new int[nShuffledBlocks]; // nBlocks - practice =10 (5 slow, 5 fast)
 
         int icount = 0;
         for (int i = 0; i < nSlowBlocks;  i++) { blockTypelist[icount++] = 1; }
         for (int i = 0; i < nFastBlocks;  i++) { blockTypelist[icount++] = 2; }
 
         shuffleArray(blockTypelist);
-        // Prepend 1 forced natural-pace block → 10 entries total, all accessed by the loop below.
-        // Total balance: 5 slow + 5 fast (1 forced + 4 shuffled fast).
+        // Prepend 1 forced natural-pace block → nBlocks entries total, all accessed by the loop below.
+        // Total balance: 5 slow + 5 fast (+ 1 forced practice).
+
         blockTypelist = new[] { 2 }.Concat(blockTypelist).ToArray();
 
         blockTypeArray = new int[(int)nTrials, 3];
@@ -239,7 +244,7 @@ public class experimentParameters : MonoBehaviour
         
         int icounter;
         icounter = 0;
-        // for staircaseblocks:
+        // for the first practice (forced) block, this contains a mix of trial types:
         for (int iblock = 0; iblock < nPracticeBlocks; iblock++)
         {
             for (int itrial = 0; itrial < nTrialsperBlock; itrial++)
@@ -253,7 +258,7 @@ public class experimentParameters : MonoBehaviour
                 {
                     blockTypeArray[icounter, 2] = 0; // stationary for first nstandingStilltrials.
                 }
-                else if (icounter >= nstandingStilltrials && icounter <= (nstandingStilltrials + 2)) // then  2x practice going slow
+                else if (icounter >= nstandingStilltrials && icounter <= (nstandingStilltrials + 10)) // then  10x practice going slow
                 {
                     blockTypeArray[icounter, 2] = 1; // slow walk.
                 }
@@ -278,29 +283,42 @@ public class experimentParameters : MonoBehaviour
 
         }
 
-        // Create balanced detection task assignment (DetectE / DetectT) for all blocks.
-        // Practice block(s) default to DetectE; experimental blocks are 50/50 shuffled.
-        blockDetectionTask = new DetectionTask[nBlocks];
+        // Detection task assignment — sub-block design.
+        //
+        // Each block of nTrialsperBlock trials is split into two equal sub-blocks:
+        //   sub-block 0: trials 0 .. (nTrialsperBlock/2 - 1)
+        //   sub-block 1: trials (nTrialsperBlock/2) .. (nTrialsperBlock - 1)
+        //
+        // Every block contains exactly one DetectE and one DetectT sub-block.
+        // The order (which half comes first) is randomised independently per block.
+        // This guarantees perfectly balanced detection-task counts within every block
+        // (and therefore within every walking-speed condition) while keeping task
+        // switches to a single transition per block.
+        //
+        // Practice block: DetectE first, DetectT second (fixed, so participants
+        // experience both tasks in a predictable order during practice).
+        blockDetectionTask = new DetectionTask[nBlocks, 2];
 
+        // Practice block(s): fixed order E → T.
         for (int i = 0; i < nPracticeBlocks; i++)
         {
-            blockDetectionTask[i] = DetectionTask.DetectE;
+            blockDetectionTask[i, 0] = DetectionTask.DetectE;
+            blockDetectionTask[i, 1] = DetectionTask.DetectT;
         }
 
-        int nDetectE = nExpBlocks / 2;
-        int nDetectT = nExpBlocks - nDetectE;
-
-        int[] taskList = new int[nExpBlocks];
-        for (int i = 0; i < nDetectE; i++) taskList[i] = 0; // DetectE
-        for (int i = nDetectE; i < nExpBlocks; i++) taskList[i] = 1; // DetectT
-        shuffleArray(taskList);
-
-        for (int i = 0; i < nExpBlocks; i++)
+        // Experimental blocks: random order, E-first or T-first with equal probability.
+        for (int i = nPracticeBlocks; i < nBlocks; i++)
         {
-            blockDetectionTask[nPracticeBlocks + i] = (DetectionTask)taskList[i];
+            bool eFirst = Random.value < 0.5f;
+            blockDetectionTask[i, 0] = eFirst ? DetectionTask.DetectE : DetectionTask.DetectT;
+            blockDetectionTask[i, 1] = eFirst ? DetectionTask.DetectT : DetectionTask.DetectE;
         }
 
-        Debug.Log("Detection task assignment per block: " + string.Join(", ", blockDetectionTask));
+        // Log the assignment for each block.
+        var log = new System.Text.StringBuilder("Detection task sub-block order per block:\n");
+        for (int i = 0; i < nBlocks; i++)
+            log.AppendFormat("  Block {0}: [{1}, {2}]\n", i, blockDetectionTask[i, 0], blockDetectionTask[i, 1]);
+        Debug.Log(log.ToString());
     }
 
 
