@@ -415,18 +415,21 @@ public class runExperiment : MonoBehaviour
         // This method handles the end of a trial, including data recording and cleanup.
         Debug.Log("End of Trial " + (trialCount + 1));
 
-        // For safety
         RecordData.recordPhase = RecordData.phase.stop;
-        //determine next start position for walking guide.
 
-        controlWalkingGuide.SetGuideForNextTrial(); //uses current trialcount +1 to determine next position.
+        // Stop the stimulus coroutine immediately. This must happen before resetting
+        // trialTime, otherwise the zombie coroutine's trailing while-loop
+        // (while trialTime < thisTrialDuration) would re-enter true when trialTime
+        // is reset to 0, keeping the coroutine alive through the entire next trial
+        // and causing a second coroutine instance to overlap with it.
+        targetAppearance.stopSequence();
 
         // Reset trial state
         trialinProgress = false;
         trialTime = 0f;
 
-        // Hide target appearance
-        makeNavonStimulus.hideNavon();
+        //determine next start position for walking guide.
+        controlWalkingGuide.SetGuideForNextTrial(); //uses current trialcount +1 to determine next position.
 
 
         // Update text screen to show next steps or end of experiment

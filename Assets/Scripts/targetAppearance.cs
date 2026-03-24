@@ -51,23 +51,29 @@ public class targetAppearance : MonoBehaviour
 
     public void startSequence()
     {
+        // Stop any coroutine still running from the previous trial before starting a new one.
+        // This is a safety net — trialPackDown() should already have called stopSequence(),
+        // but guarding here ensures no zombie can survive into the new trial.
+        StopCoroutine("trialProgress");
 
-        // some params for this trial:
-
-        //// note that trial duration changes with walk speed.
         trialDuration = runExperiment.thisTrialDuration;
-
-        
         makeNavonStimulus.hideNavon();
 
-        // note that onsets are now precalclated:
-        
+        // note that onsets are now pre-calculated:
         trialOnsets = calcStimTimes.allOnsets[runExperiment.trialCount];
 
-        
-        // Debug.Log("preparing to show " + maxTargetsThisTrial + "between " + targRange[0] + " and " + targRange[1] + " sec");
-
         StartCoroutine("trialProgress");
+    }
+
+    /// <summary>
+    /// Immediately halts the stimulus coroutine and hides the Navon display.
+    /// Must be called from trialPackDown() so the coroutine does not outlive the trial.
+    /// StopCoroutine must be called on the same MonoBehaviour that owns the coroutine.
+    /// </summary>
+    public void stopSequence()
+    {
+        StopCoroutine("trialProgress");
+        makeNavonStimulus.hideNavon();
     }
 
     /// <summary>
@@ -95,21 +101,14 @@ public class targetAppearance : MonoBehaviour
             { 
                 bool isLastTarget = itargindx == trialOnsets.Length - 1; // is this the final stimulus?
 
-                if (itargindx == 0)
-                {
-                waitTime = trialOnsets[0];
-                }
-                else
-                {
-                waitTime = trialOnsets[itargindx] - runExperiment.trialTime;
-                }
-                // first target has no ISI adjustment
+                // First stimulus: wait from trial start. Subsequent stimuli: wait for the
+                // remaining gap between now and the pre-calculated onset time.
                 if (itargindx == 0)
                 {
                     waitTime = trialOnsets[0];
                 }
                 else
-                {// adjust for time elapsed.
+                {
                     waitTime = trialOnsets[itargindx] - runExperiment.trialTime;
                 }
 

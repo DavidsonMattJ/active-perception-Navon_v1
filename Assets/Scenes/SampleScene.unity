@@ -999,7 +999,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playinVR: 1
-  participant: breetest
+  participant: test
   skipWalkCalibration: 1
   responseMapping: L:absent R:present
   trialCount: 0
@@ -1070,7 +1070,7 @@ MonoBehaviour:
   nPracticeBlocks: 0
   nWalkSpeeds: 0
   nstandingStilltrials: 0
-  blockDetectionTask: 
+  nFeedbackTrials: 0
   preTrialColor: {r: 0, g: 0, b: 0, a: 0}
   probeColor: {r: 0, g: 0, b: 0, a: 0}
   targetColor: {r: 0, g: 0, b: 0, a: 0}
